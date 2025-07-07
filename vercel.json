@@ -1,12 +1,10 @@
 {
-  "builds": [
-    { "src": "vite.config.ts", "use": "@vercel/vite" },
-    { "src": "api/**/*.ts", "use": "@vercel/node" }
-  ],
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/api/$1" },
-    { "src": "/map.html", "dest": "/map.html" },
-    { "src": "/(.*)", "dest": "/index.html" }
-  ],
-  "outputDirectory": "dist"
-}
+  "version": 2,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist/public",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index.js" },
+    { "source": "/(assets|images|css|js)/(.*)", "destination": "/$1/$2" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+} 

@@ -1,8 +1,0 @@
-{
-"type": "FeatureCollection",
-"name": "kohima_industries",
-"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
-"features": [
-{ "type": "Feature", "properties": { "element": "way", "id": 879495132 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 94.1276406, 25.6568478 ], [ 94.1273245, 25.6563778 ], [ 94.127735, 25.6561396 ], [ 94.1280559, 25.6566266 ], [ 94.1276406, 25.6568478 ] ] ] } }
-]
-}

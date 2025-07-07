@@ -1,0 +1,1985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MaveriqAir-Live AQI & Weather Dashboard</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+
+     <!-- Leaflet core -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- Leaflet Heat Plugin -->
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+
+<!-- Leaflet Fullscreen Plugin -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.fullscreen@2.4.0/Control.FullScreen.css" />
+<script src="https://unpkg.com/leaflet.fullscreen@2.4.0/Control.FullScreen.js"></script>
+
+
+
+    <style>
+      * {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans",
+    "Droid Sans", "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: linear-gradient(135deg, #1a1a1a 0%, #000000 50%, #1a1a1a 100%);
+  color: white;
+  overflow-x: hidden;
+}
+
+.app-container {
+  min-height: 100vh;
+  position: relative;
+  padding-top: 80px;
+}
+
+/* Weather Animation Canvas */
+.weather-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.6;
+}
+
+/* Loading Screen */
+.loading-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #1a1a1a 0%, #000000 50%, #1a1a1a 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.loading-content {
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 64px;
+  height: 64px;
+  border: 4px solid rgba(6, 182, 212, 0.3);
+  border-top: 4px solid #06b6d4;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-content p {
+  color: #06b6d4;
+  font-size: 1.125rem;
+}
+
+/* Main Content */
+.main-content {
+  position: relative;
+  z-index: 10;
+  padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.hidden {
+  display: none;
+}
+
+/* Glassmorphism Cards */
+.glass-card {
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1.5rem;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Hero Section */
+.hero-section {
+  text-align: center;
+}
+
+.hero-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.location-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.location,
+.time-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #06b6d4;
+}
+
+.location {
+  font-size: 1.125rem;
+}
+
+.time-info {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  font-family: "Courier New", monospace;
+}
+
+.weather-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+}
+
+.temperature {
+  font-size: 4rem;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.condition {
+  font-size: 1.25rem;
+  color: #9ca3af;
+  margin-top: 0.5rem;
+}
+
+.weather-icon {
+  width: 4rem;
+  height: 4rem;
+  color: #fbbf24;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.aqi-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 2rem;
+  padding: 0.75rem 1.5rem;
+}
+
+.aqi-indicator {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+.aqi-text {
+  font-size: 1.125rem;
+  font-weight: 500;
+}
+
+.aqi-level {
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.weather-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.stat {
+  text-align: center;
+}
+
+.stat .icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0 auto 0.25rem;
+  color: #06b6d4;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  margin-bottom: 0.25rem;
+}
+
+.stat-value {
+  font-size: 1.125rem;
+  font-weight: 500;
+}
+
+/* Icons */
+.icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  stroke-width: 2;
+}
+
+/* Tab Navigation */
+.tab-navigation {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem;
+}
+
+.tab-button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  border-radius: 0.75rem;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.875rem;
+}
+
+.tab-button:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tab-button.active {
+  background: rgba(6, 182, 212, 0.2);
+  color: #06b6d4;
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
+}
+
+.tab-icon {
+  font-size: 1rem;
+}
+
+.tab-label {
+  display: none;
+}
+
+/* Tab Content */
+.tab-content {
+  min-height: 500px;
+}
+
+.tab-panel {
+  display: none;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+.tab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.tab-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Map Container */
+.map-container {
+  position: relative;
+  height: 400px;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.map {
+  width: 100%;
+  height: 100%;
+  background: rgba(17, 24, 39, 0.5);
+  border-radius: 0.75rem;
+}
+
+.map-legend {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 1000; /* Must be above Leaflet's default z-index of 400–600 */
+}
+
+.legend-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.legend-scale {
+  display: flex;
+  height: 1rem;
+  width: 8rem;
+  border-radius: 0.25rem;
+  overflow: hidden;
+  margin-bottom: 0.25rem;
+}
+
+.legend-color {
+  flex: 1;
+}
+
+.legend-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.map-info {
+  
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+  color: #9ca3af;
+  
+}
+
+.refresh-btn {
+  background: rgba(6, 182, 212, 0.2);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  color: #06b6d4;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.refresh-btn:hover {
+  background: rgba(6, 182, 212, 0.3);
+}
+
+/* Pollutant Selector */
+.pollutant-selector select {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.pollutant-selector select option {
+  background: #1a1a1a;
+  color: white;
+}
+
+/* Layer Controls */
+.layer-controls {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.toggle-label input[type="checkbox"] {
+  display: none;
+}
+
+.toggle-slider {
+  width: 2rem;
+  height: 1rem;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 1rem;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.toggle-slider::before {
+  content: "";
+  position: absolute;
+  width: 0.75rem;
+  height: 0.75rem;
+  background: white;
+  border-radius: 50%;
+  top: 0.125rem;
+  left: 0.125rem;
+  transition: all 0.3s ease;
+}
+
+.toggle-label input[type="checkbox"]:checked + .toggle-slider {
+  background: #06b6d4;
+}
+
+.toggle-label input[type="checkbox"]:checked + .toggle-slider::before {
+  transform: translateX(1rem);
+}
+
+/* Fire Events */
+.fire-events {
+  margin-top: 1.5rem;
+}
+
+.fire-events h3 {
+  font-size: 1.125rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+.fire-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.fire-item {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(251, 146, 60, 0.2);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.fire-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.fire-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.fire-title {
+  color: #fb923c;
+  font-weight: 500;
+}
+
+.fire-location {
+  font-size: 0.875rem;
+  color: #9ca3af;
+}
+
+.fire-stats {
+  text-align: right;
+}
+
+.fire-brightness,
+.fire-confidence {
+  font-size: 0.875rem;
+  color: white;
+}
+
+.fire-date {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+/* Health Tips */
+.health-status {
+  margin-bottom: 1.5rem;
+}
+
+.status-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.status-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.status-level {
+  font-size: 1.125rem;
+  font-weight: 500;
+}
+
+.status-aqi {
+  font-size: 0.875rem;
+  color: #9ca3af;
+}
+
+.health-tips {
+  margin-bottom: 1.5rem;
+}
+
+.health-tips h3 {
+  font-size: 1.125rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+.tips-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.tip-item {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  color: #d1d5db;
+  line-height: 1.5;
+}
+
+/* Resources */
+.resources {
+  margin-bottom: 1.5rem;
+}
+
+.resources h3 {
+  font-size: 1.125rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+.resource-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.resource-item {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.resource-item:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.resource-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.resource-icon {
+  font-size: 1.5rem;
+}
+
+.resource-title {
+  font-weight: 500;
+  color: white;
+}
+
+.resource-desc {
+  font-size: 0.875rem;
+  color: #9ca3af;
+}
+
+.resource-link {
+  background: transparent;
+  border: none;
+  color: #06b6d4;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.resource-link:hover {
+  background: rgba(6, 182, 212, 0.1);
+}
+
+/* Emergency Info */
+.emergency-info {
+  background: rgba(239, 68, 68, 0.1) !important;
+  border: 1px solid rgba(239, 68, 68, 0.2) !important;
+}
+
+.emergency-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #ef4444;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.emergency-info p {
+  color: #d1d5db;
+  line-height: 1.5;
+}
+
+/* Responsive Design */
+@media (min-width: 640px) {
+  .tab-label {
+    display: inline;
+  }
+
+  .weather-stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .layer-controls {
+    flex-wrap: nowrap;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding: 1rem;
+  }
+
+  .glass-card {
+    padding: 1.5rem;
+  }
+
+  .weather-main {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .temperature {
+    font-size: 3rem;
+  }
+
+  .weather-stats {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .tab-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .layer-controls {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .map-container {
+    height: 300px;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.leaflet-popup-content-wrapper {
+  background-color: #1e1e1e !important;
+  color: #f1f1f1 !important;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+.leaflet-popup-tip {
+  background-color: #1e1e1e !important;
+}
+
+.leaflet-popup-content {
+  margin: 6px 0;
+}
+
+.leaflet-popup-content strong {
+  color: #ffffff;
+}
+
+.leaflet-popup-content small {
+  color: #cccccc;
+}
+/* Navbar - Standalone Style */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+
+  padding: 1rem 2rem;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Logo + Title */
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.navbar-logo {
+  width: 48px;
+  height: 48px;
+}
+
+.navbar-title {
+  font-size: 1.5rem;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Right Button */
+.navbar-right .aqi-forecaster-btn {
+  background-color: #06b6d4;
+  color: #000000;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.navbar-right .aqi-forecaster-btn:hover {
+  background-color: #00ffff;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
+}
+
+
+    </style>
+</head>
+<body>
+  <nav class="navbar">
+  <div class="navbar-left">
+    <img src="MaveriqAir-logo.png" alt="Logo" class="navbar-logo" />
+    <span class="navbar-title">MaveriqAir</span>
+  </div>
+  <div class="navbar-right">
+    <a href="https://aqipredictorapp28.streamlit.app/" class="aqi-forecaster-btn" target="_blank">
+      AQI Predictor
+    </a>
+  </div>
+</nav>
+
+    <div class="app-container">
+        <!-- Weather Animation Canvas -->
+        <canvas id="weather-canvas" class="weather-canvas"></canvas>
+        
+        <!-- Loading Screen -->
+        <div id="loading-screen" class="loading-screen">
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <p>Loading environmental data...</p>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div id="main-content" class="main-content hidden">
+            <!-- Hero Section -->
+            <div class="hero-section glass-card">
+                <div class="hero-content">
+                    <!-- Location and Time -->
+                    <div class="location-info">
+                        <div class="location">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                <circle cx="12" cy="10" r="3"></circle>
+                            </svg>
+                            <span id="location-name">Loading...</span>
+                        </div>
+                        <div class="time-info">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12,6 12,12 16,14"></polyline>
+                            </svg>
+                            <span id="current-time">--:--:--</span>
+                        </div>
+                    </div>
+
+                    <!-- Temperature and Weather -->
+                    <div class="weather-main">
+                        <div class="temperature-section">
+                            <div class="temperature" id="temperature">--°</div>
+                            <div class="condition" id="weather-condition">Loading...</div>
+                        </div>
+                        <div class="weather-icon" id="weather-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <circle cx="12" cy="12" r="5"></circle>
+                                <line x1="12" y1="1" x2="12" y2="3"></line>
+                                <line x1="12" y1="21" x2="12" y2="23"></line>
+                                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                                <line x1="1" y1="12" x2="3" y2="12"></line>
+                                <line x1="21" y1="12" x2="23" y2="12"></line>
+                                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- AQI Badge -->
+                    <div class="aqi-badge" id="aqi-badge">
+                        <div class="aqi-indicator" id="aqi-indicator"></div>
+                        <span class="aqi-text">AQI: <span id="aqi-value">--</span></span>
+                        <span class="aqi-level" id="aqi-level">Loading...</span>
+                    </div>
+
+                    <!-- Weather Stats -->
+                    <div class="weather-stats">
+                        <div class="stat">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+                            </svg>
+                            <div class="stat-label">Humidity</div>
+                            <div class="stat-value" id="humidity">--%</div>
+                        </div>
+                        <div class="stat">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"></path>
+                                <path d="M9.6 4.6A2 2 0 1 1 11 8H2"></path>
+                                <path d="M12.6 19.4A2 2 0 1 0 14 16H2"></path>
+                            </svg>
+                            <div class="stat-label">Wind</div>
+                            <div class="stat-value" id="wind-speed">-- km/h</div>
+                        </div>
+                        <div class="stat">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            <div class="stat-label">Visibility</div>
+                            <div class="stat-value" id="visibility">-- km</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="tab-navigation glass-card">
+                <button class="tab-button active" data-tab="0">
+                    <span class="tab-icon">🧭</span>
+                    <span class="tab-label">AQI Heatmap</span>
+                </button>
+                <button class="tab-button" data-tab="1">
+                    <span class="tab-icon">🏭</span>
+                    <span class="tab-label">Pollution Sources</span>
+                </button>
+                <button class="tab-button" data-tab="2">
+                    <span class="tab-icon">❤️</span>
+                    <span class="tab-label">Health Tips</span>
+                </button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="tab-content">
+                <!-- AQI Heatmap Tab -->
+                <div class="tab-panel active" id="tab-0">
+                    <div class="glass-card">
+                        <div class="tab-header">
+                            <h2>Real-Time AQI & Pollutant Heatmap</h2>
+                            <div class="pollutant-selector">
+                                <select id="pollutant-select">
+                                    <option value="no2">NO₂</option>
+                                    <option value="co">CO</option>
+                                    <option value="so2">SO₂</option>
+                                    <option value="o3">O₃</option>
+                                    <option value="hcho">HCHO</option>
+                                    <option value="aerosol">Aerosol Index</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="map-container">
+                            <div id="aqi-map" class="map"></div>
+                            <div class="map-legend">
+                                <div class="legend-title">NO₂ Concentration</div>
+                                <div class="legend-scale" id="legend-colors"></div>
+                                <div class="legend-labels">
+                                    <span>Low</span>
+                                    <span>High</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="map-info">
+  <p>Click on data points to view detailed information</p>
+  <div id="map-data-details"></div>
+  <button class="refresh-btn">Refresh Data</button>
+</div>
+                    </div>
+                </div>
+
+                <!-- Pollution Sources Tab -->
+                <div class="tab-panel" id="tab-1">
+                    <div class="glass-card">
+                        <div class="tab-header">
+                            <h2>Pollution Sources Map</h2>
+                            <div class="layer-controls">
+                                <label class="toggle-label">
+                                    <input type="checkbox" id="roads-toggle" checked>
+                                    <span class="toggle-slider"></span>
+                                    🚗 Major Roads
+                                </label>
+                                <label class="toggle-label">
+                                    <input type="checkbox" id="industries-toggle" checked>
+                                    <span class="toggle-slider"></span>
+                                    🏭 Industrial Zones
+                                </label>
+                                <label class="toggle-label">
+                                    <input type="checkbox" id="fires-toggle" checked>
+                                    <span class="toggle-slider"></span>
+                                    🔥 Fire Events
+                                </label>
+                            </div>
+                        </div>
+                        <div class="map-container">
+                            <div id="pollution-map" class="map"></div>
+                        </div>
+                        <div class="fire-events" id="fire-events">
+                            <h3>Recent Fire Events</h3>
+                            <div class="fire-list" id="fire-list">
+                                <!-- Fire events will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Health Tips Tab -->
+                <div class="tab-panel" id="tab-2">
+                    <div class="glass-card">
+                        <div class="tab-header">
+                            <h2>
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                </svg>
+                                Health Tips & Resources
+                            </h2>
+                        </div>
+                        
+                        <div class="health-status glass-card" id="health-status">
+                            <div class="status-header">
+                                <div class="status-icon" id="status-icon">✓</div>
+                                <div class="status-info">
+                                    <div class="status-level" id="status-level">Good</div>
+                                    <div class="status-aqi">AQI: <span id="status-aqi-value">50</span></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="health-tips">
+                            <h3>Recommended Actions</h3>
+                            <div class="tips-list" id="tips-list">
+                                <!-- Tips will be populated by JavaScript -->
+                            </div>
+                        </div>
+
+                        <div class="resources">
+                            <h3>Learn More</h3>
+                            <div class="resource-list">
+                                <div class="resource-item">
+                                    <div class="resource-info">
+                                        <span class="resource-icon">🌍</span>
+                                        <div>
+                                            <div class="resource-title">WHO Air Quality Guidelines</div>
+                                            <div class="resource-desc">Global guidelines for air quality standards and health impacts.</div>
+                                        </div>
+                                    </div>
+                                    <button class="resource-link" onclick="window.open('https://www.who.int/news-room/feature-stories/detail/what-are-the-who-air-quality-guidelines', '_blank')">
+                                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                            <polyline points="15,3 21,3 21,9"></polyline>
+                                            <line x1="10" y1="14" x2="21" y2="3"></line>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div class="resource-item">
+                                    <div class="resource-info">
+                                        <span class="resource-icon">🇺🇸</span>
+                                        <div>
+                                            <div class="resource-title">EPA AirNow</div>
+                                            <div class="resource-desc">Real-time air quality information and forecasts.</div>
+                                        </div>
+                                    </div>
+                                    <button class="resource-link" onclick="window.open('https://www.airnow.gov/', '_blank')">
+                                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                            <polyline points="15,3 21,3 21,9"></polyline>
+                                            <line x1="10" y1="14" x2="21" y2="3"></line>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div class="resource-item">
+                                    <div class="resource-info">
+                                        <span class="resource-icon">🏥</span>
+                                        <div>
+                                            <div class="resource-title">Air Quality Health Index</div>
+                                            <div class="resource-desc">Understanding health risks and protective actions.</div>
+                                        </div>
+                                    </div>
+                                    <button class="resource-link" onclick="window.open('https://www.canada.ca/en/environment-climate-change/services/air-quality-health-index.html', '_blank')">
+                                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                            <polyline points="15,3 21,3 21,9"></polyline>
+                                            <line x1="10" y1="14" x2="21" y2="3"></line>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="emergency-info glass-card">
+                            <div class="emergency-header">
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                </svg>
+                                <span>Emergency</span>
+                            </div>
+                            <p>If experiencing severe respiratory symptoms, seek immediate medical attention or call emergency services.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+    <script>
+      // Define color palettes globally so updateLegend can access it
+var colorPalettes = {
+  no2: ['black', 'blue', 'purple', 'cyan', 'green', 'yellow', 'red'],
+  co: ['black', 'blue', 'cyan', 'green', 'yellow', 'red'],
+  so2: ['black', 'purple', 'blue', 'green', 'yellow', 'orange', 'red'],
+  o3: ['black', 'purple', 'blue', 'green', 'yellow', 'orange', 'red'],
+  hcho: ['black', 'blue', 'cyan', 'green', 'yellow', 'red'],
+  aerosol: ['black', 'blue', 'cyan', 'green', 'yellow', 'red']
+};
+
+      class WeatherApp {
+  constructor() {
+    this.currentWeatherData = null
+    this.activeTab = 0
+    this.maps = {
+      aqi: null,
+      pollution: null,
+    }
+    this.weatherAnimationId = null
+
+    this.init()
+  }
+
+  async init() {
+    this.setupEventListeners()
+    this.startClock()
+    await this.loadWeatherData()
+    this.hideLoadingScreen()
+    this.initWeatherAnimation()
+    this.updateHealthTips()
+  }
+
+  setupEventListeners() {
+    // Tab navigation
+    document.querySelectorAll(".tab-button").forEach((button) => {
+      button.addEventListener("click", (e) => {
+        const tabId = Number.parseInt(e.currentTarget.dataset.tab)
+        this.switchTab(tabId)
+      })
+    })
+
+    // Pollutant selector
+    document.getElementById("pollutant-select").addEventListener("change", (e) => {
+      this.updatePollutantLayer(e.target.value)
+    })
+
+    // Refresh button
+    document.querySelector(".refresh-btn").addEventListener("click", () => {
+      this.refreshData()
+    })
+  }
+
+  startClock() {
+    const updateTime = () => {
+      const now = new Date()
+      const timeString = now.toLocaleTimeString()
+      document.getElementById("current-time").textContent = timeString
+    }
+
+    updateTime()
+    setInterval(updateTime, 1000)
+  }
+  
+  // Updated Weather & AQI Real-time Integration Code with Debug Logs
+
+async loadWeatherData() {
+  try {
+    const position = await new Promise((resolve, reject) => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(resolve, () => resolve({ coords: { latitude: 40.7128, longitude: -74.006 } }))
+      } else {
+        resolve({ coords: { latitude: 40.7128, longitude: -74.006 } })
+      }
+    })
+
+    const { latitude, longitude } = position.coords
+    console.log("[DEBUG] Coordinates:", latitude, longitude)
+    const airData = await this.fetchAirData(latitude, longitude)
+    console.log("[DEBUG] Air data fetched:", airData)
+
+    this.setWeatherData(latitude, longitude, airData)
+  } catch (error) {
+    console.error("Error loading weather data:", error)
+    this.setMockWeatherData(40.7128, -74.006)
+  }
+}
+
+setWeatherData(lat, lon, airData) {
+  if (!airData.weather || !airData.pollution) {
+    console.warn("[DEBUG] Incomplete air data:", airData)
+    this.setMockWeatherData(lat, lon)
+    return
+  }
+
+  console.log("[DEBUG] Setting currentWeatherData")
+  this.currentWeatherData = {
+    location: `${airData.city}, ${airData.state}`,
+    temperature: airData.weather.tp ?? "--",
+    condition: this.getConditionFromIcon(airData.weather.ic),
+    humidity: airData.weather.hu ?? "--",
+    windSpeed: airData.weather.ws ? (airData.weather.ws * 3.6).toFixed(1) : "--",
+    visibility: 10,
+    aqi: airData.pollution.aqicn ?? 0,
+    coordinates: { lat, lon },
+  }
+
+  this.updateWeatherDisplay()
+}
+
+setMockWeatherData(lat, lon) {
+  console.log("[DEBUG] Setting mock weather data")
+  this.currentWeatherData = {
+    location: "Unknown",
+    temperature: "--",
+    condition: "Clear",
+    humidity: "--",
+    windSpeed: "--",
+    visibility: "--",
+    aqi: 0,
+    coordinates: { lat, lon },
+  }
+
+  this.updateWeatherDisplay()
+}
+
+updateWeatherDisplay() {
+  const data = this.currentWeatherData
+  console.log("[DEBUG] Updating weather display with:", data)
+  document.getElementById("location-name").textContent = data.location
+  document.getElementById("temperature").textContent = `${data.temperature}°`
+  document.getElementById("weather-condition").textContent = data.condition
+  document.getElementById("humidity").textContent = `${data.humidity}%`
+  document.getElementById("wind-speed").textContent = `${data.windSpeed} km/h`
+  document.getElementById("visibility").textContent = `${data.visibility} km`
+  this.updateAQIDisplay(data.aqi)
+  this.updateWeatherIcon(data.condition)
+  this.updateTime()
+}
+
+updateAQIDisplay(aqi) {
+  const aqiInfo = this.getAQIInfo(aqi)
+  console.log("[DEBUG] AQI Info:", aqi, aqiInfo)
+  document.getElementById("aqi-value").textContent = aqi
+  document.getElementById("aqi-level").textContent = aqiInfo.level
+
+  const indicator = document.getElementById("aqi-indicator")
+  const level = document.getElementById("aqi-level")
+
+  indicator.style.backgroundColor = aqiInfo.color
+  level.style.backgroundColor = aqiInfo.color + "20"
+  level.style.color = aqiInfo.color
+}
+
+getAQIInfo(aqi) {
+  if (aqi <= 50) return { level: "Good", color: "#00ff88" }
+  if (aqi <= 100) return { level: "Moderate", color: "#ffff00" }
+  if (aqi <= 150) return { level: "Unhealthy for Sensitive", color: "#ff8800" }
+  if (aqi <= 200) return { level: "Unhealthy", color: "#ff0000" }
+  if (aqi <= 300) return { level: "Very Unhealthy", color: "#8800ff" }
+  return { level: "Hazardous", color: "#800000" }
+}
+
+updateWeatherIcon(condition) {
+  const iconContainer = document.getElementById("weather-icon")
+  let iconSVG = ""
+  console.log("[DEBUG] Updating weather icon for:", condition)
+
+  switch (condition.toLowerCase()) {
+    case "clear":
+    case "sunny":
+      iconSVG = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>`
+      iconContainer.style.color = "#fbbf24"
+      break
+    case "cloudy":
+    case "overcast":
+      iconSVG = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
+        </svg>`
+      iconContainer.style.color = "#9ca3af"
+      break
+    case "rain":
+    case "rainy":
+      iconSVG = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <line x1="16" y1="13" x2="16" y2="21"></line>
+          <line x1="8" y1="13" x2="8" y2="21"></line>
+          <line x1="12" y1="15" x2="12" y2="23"></line>
+          <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path>
+        </svg>`
+      iconContainer.style.color = "#60a5fa"
+      break
+    default:
+      iconSVG = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>`
+      iconContainer.style.color = "#fbbf24"
+  }
+
+  iconContainer.innerHTML = iconSVG
+}
+
+updateTime() {
+  const now = new Date()
+  const formatted = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  document.getElementById("current-time").textContent = formatted
+}
+
+
+getConditionFromIcon(ic) {
+  console.log("[DEBUG] Weather icon code:", ic)
+  if (ic.startsWith("01")) return "Clear"
+  if (ic.startsWith("02")) return "Partly Cloudy"
+  if (ic.startsWith("03") || ic.startsWith("04")) return "Cloudy"
+  if (ic.startsWith("09") || ic.startsWith("10")) return "Rain"
+  if (ic.startsWith("11")) return "Thunderstorm"
+  if (ic.startsWith("13")) return "Snow"
+  if (ic.startsWith("50")) return "Mist"
+  return "Clear"
+}
+
+  hideLoadingScreen() {
+    document.getElementById("loading-screen").style.display = "none"
+    document.getElementById("main-content").classList.remove("hidden")
+  }
+
+  switchTab(tabId) {
+    // Update active tab button
+    document.querySelectorAll(".tab-button").forEach((button) => {
+      button.classList.remove("active")
+    })
+    document.querySelector(`[data-tab="${tabId}"]`).classList.add("active")
+
+    // Update active tab panel
+    document.querySelectorAll(".tab-panel").forEach((panel) => {
+      panel.classList.remove("active")
+    })
+    document.getElementById(`tab-${tabId}`).classList.add("active")
+
+    this.activeTab = tabId
+
+    // Initialize maps when switching to map tabs
+    if (tabId === 0 && !this.maps.aqi) {
+      setTimeout(() => this.initAQIMap(), 100)
+    } else if (tabId === 1 && !this.maps.pollution) {
+      setTimeout(() => this.initPollutionMap(), 100)
+    }
+  }
+
+ // Refactored AQI Map Setup
+
+initAQIMap() {
+  try {
+    const mapContainer = document.getElementById("aqi-map");
+    if (!mapContainer || this.maps.aqi) return;
+
+    mapContainer.innerHTML = '<div id="map" style="width: 100%; height: 100%"></div>';
+    this.setupRealAQIMap();
+    this.maps.aqi = true;
+  } catch (error) {
+    console.error("Error initializing AQI map:", error);
+  }
+}
+
+async setupRealAQIMap() {
+  console.log("[DEBUG] Initializing real AQI map...");
+console.log("L.Control.Fullscreen:", typeof L.Control.Fullscreen); // should be "function"
+
+ const map = L.map('map').setView([22.5726, 88.3639], 6);
+
+  
+
+  console.log("[DEBUG] Map initialized at default location [22.5726, 88.3639]");
+  console.log("[DEBUG] L.heatLayer available?", typeof L.heatLayer);
+
+  const overlays = {
+    no2: L.tileLayer('https://earthengine.googleapis.com/v1/projects/auramed-455016/maps/87cc5cd901bc68dc6fdffa0f36d3aaff-0e41299ad40395508cfb9934e4fa9954/tiles/{z}/{x}/{y}', { attribution: 'Sentinel-5P NO₂' }),
+    co: L.tileLayer('https://earthengine.googleapis.com/v1/projects/auramed-455016/maps/33a630d000993cc359d7147b3f63c765-d9a2e14e1037544c6a42e0852b4238a9/tiles/{z}/{x}/{y}', { attribution: 'Sentinel-5P CO' }),
+    so2: L.tileLayer('https://earthengine.googleapis.com/v1/projects/auramed-455016/maps/a46ab02b783ecc42c7b1723d7c0c5767-53ac9ff2d1e692260a507078cf11a589/tiles/{z}/{x}/{y}', { attribution: 'Sentinel-5P SO₂' }),
+    o3: L.tileLayer('https://earthengine.googleapis.com/v1/projects/auramed-455016/maps/959d0addd082022e1745998d1693ab3c-cfd47c97e347748143617e8a6b79b9b6/tiles/{z}/{x}/{y}', { attribution: 'Sentinel-5P O₃' }),
+    hcho: L.tileLayer('https://earthengine.googleapis.com/v1/projects/auramed-455016/maps/cf6359f575725d32141fcef2baa81d6c-f16f450aa77f96274dd8c7b7d91288e5/tiles/{z}/{x}/{y}', { attribution: 'Sentinel-5P HCHO' }),
+    aerosol: L.tileLayer('https://earthengine.googleapis.com/v1/projects/auramed-455016/maps/293d5c1919a1643c599cb6b2ffa0c845-3d7a91b1b788784b1a5353eaee3da900/tiles/{z}/{x}/{y}', { attribution: 'Sentinel-5P Aerosol Index' })
+  };
+  overlays.no2.addTo(map);
+  let currentOverlay = overlays.no2;
+
+  const heatLayers = {
+    no2: L.heatLayer([], { radius: 25, blur: 15, maxZoom: 17 }),
+    co: L.heatLayer([], { radius: 25, blur: 15, maxZoom: 17 }),
+    so2: L.heatLayer([], { radius: 25, blur: 15, maxZoom: 17 }),
+    o3: L.heatLayer([], { radius: 25, blur: 15, maxZoom: 17 }),
+    hcho: L.heatLayer([], { radius: 25, blur: 15, maxZoom: 17 }),
+    aerosol: L.heatLayer([], { radius: 25, blur: 15, maxZoom: 17 })
+  };
+
+  let currentHeatLayer = heatLayers.no2;
+  currentHeatLayer.addTo(map);
+
+  const currentLocationIcon = L.icon({
+    iconUrl: './Images/marker-icon-2x-green.png',
+    iconSize: [25, 41], iconAnchor: [12, 41]
+  });
+
+  const clickedLocationIcon = L.icon({
+    iconUrl: './Images/marker-icon-2x-orange.png',
+    iconSize: [25, 41], iconAnchor: [12, 41]
+  });
+
+  const self = this;
+
+  function updateLegend(pollutant) {
+    const palette = colorPalettes[pollutant];
+    const legendDiv = document.getElementById('legend-colors');
+    legendDiv.innerHTML = '';
+    palette.forEach(color => {
+      const block = document.createElement('div');
+      block.className = 'legend-color';
+      block.style.background = color;
+      legendDiv.appendChild(block);
+    });
+    document.querySelector('.legend-title').innerText = pollutant.toUpperCase() + " Concentration";
+  }
+
+  updateLegend("no2");
+
+  document.getElementById('pollutant-select')?.addEventListener('change', function () {
+    const selected = this.value;
+    console.log("[DEBUG] Pollutant changed to:", selected);
+
+    if (!overlays[selected] || !heatLayers[selected]) {
+      console.error("[ERROR] Unknown pollutant selected:", selected);
+      return;
+    }
+
+    map.removeLayer(currentOverlay);
+    currentOverlay = overlays[selected];
+    map.addLayer(currentOverlay);
+
+    map.removeLayer(currentHeatLayer);
+    currentHeatLayer = heatLayers[selected];
+    currentHeatLayer.addTo(map);
+
+    updateLegend(selected);
+  });
+  function updateMapInfo(lat, lon, airData) {
+  const infoDiv = document.getElementById("map-data-details");
+  const pollutantInfo = airData?.pollution || {};
+
+  infoDiv.innerHTML = `
+    <p><strong>Latitude:</strong> ${lat.toFixed(4)}</p>
+    <p><strong>Longitude:</strong> ${lon.toFixed(4)}</p>
+    <p><strong>AQI (CN):</strong> ${pollutantInfo.aqicn ?? "N/A"}</p>
+  `;
+}
+
+
+ navigator.geolocation.getCurrentPosition(async position => {
+  const lat = position.coords.latitude;
+  const lon = position.coords.longitude;
+
+  // 👇 Set to broader zoom level to show more of the country
+  map.setView([lat, lon], 3); // zoom 5 is ideal for whole India
+
+  // 📍 Add marker at user's location
+  L.marker([lat, lon], { icon: currentLocationIcon }).addTo(map)
+    .bindPopup(`
+      <strong>Your Location</strong><br>
+      <small>[${lat.toFixed(4)}, ${lon.toFixed(4)}]</small>
+    `, { offset: L.point(0, -20) })
+    .openPopup();
+
+  // 🌫️ AQI heat and info
+  const airData = await self.fetchAirData(lat, lon);
+  const heatValue = Math.min(Math.max(airData.pollution.aqicn / 300, 0.1), 1.0);
+  currentHeatLayer.addLatLng([lat, lon, heatValue]);
+  updateMapInfo(lat, lon, airData);
+
+}, error => {
+  console.error("[ERROR] Geolocation failed:", error);
+});
+}
+
+
+
+
+  async fetchAirData(lat, lon) {
+  const url = `https://api.airvisual.com/v2/nearest_city?lat=${lat}&lon=${lon}&key=e5e635df-37a8-4ac7-b712-2a0207578385`
+  try {
+    const response = await fetch(url)
+    const json = await response.json()
+    console.log("[DEBUG] Raw response:", json)
+    if (json.status === "success") {
+      const d = json.data
+      return {
+        city: d.city,
+        state: d.state,
+        country: d.country,
+        pollution: {
+          maincn: d.current.pollution?.maincn ?? "N/A",
+          aqicn: d.current.pollution?.aqicn ?? 0
+        },
+        weather: {
+          tp: d.current.weather?.tp ?? "N/A",
+          hu: d.current.weather?.hu ?? "N/A",
+          pr: d.current.weather?.pr ?? "N/A",
+          ws: d.current.weather?.ws ?? "N/A",
+          wd: d.current.weather?.wd ?? "N/A",
+          ic: d.current.weather?.ic ?? "01d"
+        }
+      }
+    } else {
+      throw new Error("Air data fetch failed")
+    }
+  } catch (error) {
+    console.error("Error fetching air data:", error)
+    return {
+      city: "N/A",
+      state: "N/A",
+      country: "N/A",
+      pollution: { maincn: "N/A", aqicn: 0 },
+      weather: { tp: "N/A", hu: "N/A", pr: "N/A", ws: "N/A", wd: "N/A", ic: "01d" }
+    }
+  }
+}
+
+  initPollutionMap() {
+  try {
+    const mapContainer = document.getElementById("pollution-map");
+    if (!mapContainer || this.maps.pollution) return;
+
+    mapContainer.innerHTML = '<div id="map" style="width: 100%; height: 100%"></div>';
+    this.setupPollutionSourcesMap();
+    this.maps.pollution = true;
+  } catch (error) {
+    console.error("Error initializing pollution map:", error);
+  }
+}
+
+setupPollutionSourcesMap() {
+  mapboxgl.accessToken = 'pk.eyJ1IjoibWFoYWQxNjA0IiwiYSI6ImNtY3A2OWlpaTAydXQybHIyYjJvejhqemQifQ.2y3ZmPe5lRXfqns5zlG7hA';
+
+  const map = new mapboxgl.Map({
+    container: 'pollution-map',
+    style: 'mapbox://styles/mapbox/dark-v11',
+    center: [78.9629, 22.5937],
+    zoom: 4
+  });
+  map.addControl(new mapboxgl.FullscreenControl(), 'top-right');
+
+   // 🚀 List of short city names matching your saved files
+const roadCities = [
+"delhi","mumbai","bengaluru","kolkata","chennai","hyderabad","ahmedabad","pune",
+"jaipur","lucknow","surat","kanpur","nagpur","indore","bhopal","patna","ludhiana",
+"agra","nashik","faridabad","varanasi","rajkot","meerut","jabalpur","jamshedpur",
+"asansol","vijayawada","dhanbad","amritsar","allahabad","gwalior","coimbatore",
+"hubli-dharwad","aurangabad","jodhpur","madurai","raipur","kota","guwahati",
+"chandigarh","thiruvananthapuram","solapur","ranchi","bareilly","moradabad",
+"mysuru","tiruchirappalli","jalandhar","bhubaneswar","salem","warangal","guntur",
+"bhiwandi","saharanpur","gorakhpur","bikaner","amravati","noida","firozabad",
+"muzaffarnagar","udaipur","aligarh","bilaspur","jhansi","siliguri","nanded",
+"belgaum","cuttack","akola","bhavnagar","kollam","kolhapur","gaya","rewa",
+"ujjain","davangere","tirunelveli","erode","nellore","rourkela","ajmer",
+"bellary","durgapur","tuticorin","ratlam","kakinada","panipat","anantapur",
+"karnal","hisar","rohtak","sonipat","alwar","sambalpur","shimoga","yamunanagar",
+"pondicherry","nizamabad","bardhaman","karimnagar","muzaffarpur",
+"bokaro_steel_city","rampur","haridwar","barasat","katihar","darbhanga",
+"gopalganj","bidar","satna","dewas","palakkad","kottayam","bhagalpur",
+"haldwani","bhatinda","ambala","imphal","agartala","dima_pur","itanagar",
+"aizawl","shillong","kohima","gangtok","port_blair","pali","gandhinagar",
+"bharuch","navsari","valsad","vellore","kanchipuram","tirupati","hosur","tumakuru"
+];
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+
+      map.flyTo({ center: [lon, lat], zoom: 10, essential: true });
+
+      const apiKey = '6c62e89a297a4da6ab74740be026e9e7';
+      const url = `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lon}&key=${apiKey}`;
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        const address = data.results[0]?.formatted || "Unknown location";
+
+        new mapboxgl.Marker({ color: "#2e7d32" })
+          .setLngLat([lon, lat])
+          .setPopup(new mapboxgl.Popup().setHTML(`<strong>Your Location</strong><br>${address}`))
+          .addTo(map);
+      } catch (err) {
+        console.error("Reverse geocode failed:", err);
+      }
+    }, () => {
+      console.error("Geolocation permission denied.");
+    });
+  }
+
+  map.on('load', () => {
+    roadCities.forEach(city => {
+      map.addSource(`${city}_roads`, {
+        type: 'geojson',
+        data: `./Geojson/${city}_roads.geojson`
+      });
+      map.addLayer({
+        id: `${city}_roads`,
+        type: 'line',
+        source: `${city}_roads`,
+        layout: { visibility: 'visible' },
+        paint: {
+          'line-color': '#1a73e8',
+          'line-width': 1.5
+        }
+      });
+
+      map.addSource(`${city}_industries`, {
+        type: 'geojson',
+        data: `./Geojson/${city}_industries.geojson`
+      });
+      map.addLayer({
+        id: `${city}_industries`,
+        type: 'fill',
+        source: `${city}_industries`,
+        layout: { visibility: 'visible' },
+        paint: {
+          'fill-color': '#d32f2f',
+          'fill-opacity': 0.3
+        }
+      });
+    });
+
+    map.addSource('fires', {
+      type: 'geojson',
+      data: './Geojson/fires.geojson'
+    });
+    map.addLayer({
+      id: 'fires',
+      type: 'circle',
+      source: 'fires',
+      layout: { visibility: 'visible' },
+      paint: {
+        'circle-radius': 4,
+        'circle-color': [
+          'interpolate',
+          ['linear'],
+          ['get', 'bright_ti4'],
+          300, '#ffb74d',
+          330, '#fb8c00',
+          360, '#e65100',
+          390, '#bf360c'
+        ],
+        'circle-opacity': 0.7
+      }
+    });
+
+    // Fire event popup
+    map.on('click', 'fires', (e) => {
+      const props = e.features[0].properties;
+      new mapboxgl.Popup()
+        .setLngLat(e.lngLat)
+        .setHTML(`<strong>Fire</strong><br>
+          Date: ${props.acq_date}<br>
+          Brightness: ${props.bright_ti4}<br>
+          Confidence: ${props.confidence}<br>
+          FRP: ${props.frp}<br>
+          ${props.daynight === "D" ? "Day" : "Night"}`)
+        .addTo(map);
+    });
+
+    map.on('mouseenter', 'fires', () => map.getCanvas().style.cursor = 'pointer');
+    map.on('mouseleave', 'fires', () => map.getCanvas().style.cursor = '');
+
+    // Toggle controls (updated IDs to match your HTML)
+    document.getElementById('roads-toggle')?.addEventListener('change', (e) => {
+      roadCities.forEach(city => {
+        map.setLayoutProperty(`${city}_roads`, 'visibility', e.target.checked ? 'visible' : 'none');
+      });
+    });
+
+    document.getElementById('industries-toggle')?.addEventListener('change', (e) => {
+      roadCities.forEach(city => {
+        map.setLayoutProperty(`${city}_industries`, 'visibility', e.target.checked ? 'visible' : 'none');
+      });
+    });
+
+    document.getElementById('fires-toggle')?.addEventListener('change', (e) => {
+      map.setLayoutProperty('fires', 'visibility', e.target.checked ? 'visible' : 'none');
+    });
+
+    // Legend inside the map
+    const legend = document.createElement('div');
+legend.innerHTML = `
+  <div style="
+    background:#1e1e1e;
+    color:#eee;
+    padding:10px 14px;
+    border-radius:8px;
+    box-shadow:0 1px 3px rgba(0,0,0,0.4);
+    font-size:14px;
+    line-height:1.6;
+  ">
+    <strong>Legend</strong><br>
+    <div><span style="display:inline-block;width:12px;height:12px;background:#1a73e8;margin-right:6px;border-radius:2px"></span> Roads</div>
+    <div><span style="display:inline-block;width:12px;height:12px;background:#d32f2f;margin-right:6px;border-radius:2px"></span> Industries</div>
+    <div><span style="display:inline-block;width:12px;height:12px;background:#fb8c00;margin-right:6px;border-radius:2px"></span> Fire Events</div>
+  </div>
+`;
+legend.style.position = 'absolute';
+legend.style.bottom = '20px';
+legend.style.left = '20px';
+legend.style.zIndex = '1';
+document.getElementById('pollution-map').appendChild(legend);
+  });
+}
+
+
+  updateHealthTips() {
+    if (!this.currentWeatherData) return
+
+    const aqi = this.currentWeatherData.aqi
+    const aqiInfo = this.getAQIInfo(aqi)
+    const tips = this.getHealthTips(aqi)
+
+    // Update status
+    document.getElementById("status-level").textContent = aqiInfo.level
+    document.getElementById("status-aqi-value").textContent = aqi
+
+    const statusIcon = document.getElementById("status-icon")
+    const statusIconContainer = statusIcon.parentElement
+
+    if (aqi <= 50) {
+      statusIcon.textContent = "✓"
+      statusIconContainer.style.backgroundColor = "#00ff88"
+      statusIconContainer.style.color = "#000"
+    } else if (aqi <= 100) {
+      statusIcon.textContent = "⚠"
+      statusIconContainer.style.backgroundColor = "#ffff00"
+      statusIconContainer.style.color = "#000"
+    } else {
+      statusIcon.textContent = "⚠"
+      statusIconContainer.style.backgroundColor = "#ff0000"
+      statusIconContainer.style.color = "#fff"
+    }
+
+    // Update tips
+    const tipsList = document.getElementById("tips-list")
+    tipsList.innerHTML = tips
+      .map(
+        (tip) => `
+            <div class="tip-item">${tip}</div>
+        `,
+      )
+      .join("")
+  }
+
+  getHealthTips(aqi) {
+    if (aqi <= 50) {
+      return [
+        "🌟 Perfect air quality! Great time for outdoor activities.",
+        "🏃‍♂️ Ideal conditions for jogging, cycling, and sports.",
+        "🌱 Consider opening windows for natural ventilation.",
+        "😊 No health precautions needed for any group.",
+      ]
+    } else if (aqi <= 100) {
+      return [
+        "😷 Sensitive individuals should consider limiting prolonged outdoor exertion.",
+        "🏠 Keep windows closed during high traffic hours.",
+        "🧼 Use air purifiers indoors if available.",
+        "👶 Monitor children and elderly for any discomfort.",
+      ]
+    } else if (aqi <= 150) {
+      return [
+        "😷 Wear N95 masks when going outdoors.",
+        "🏠 Stay indoors as much as possible.",
+        "🧼 Use air purifiers and keep windows closed.",
+        "🏃‍♂️ Avoid outdoor exercise and strenuous activities.",
+        "👶 Keep children and elderly indoors.",
+      ]
+    } else {
+      return [
+        "🚨 Avoid all outdoor activities.",
+        "😷 Wear N95 or P100 masks if you must go outside.",
+        "🏠 Stay indoors with air purifiers running.",
+        "🪟 Keep all windows and doors closed.",
+        "🏥 Seek medical attention if experiencing symptoms.",
+        "💊 Have rescue medications readily available.",
+      ]
+    }
+  }
+
+  initWeatherAnimation() {
+    const canvas = document.getElementById("weather-canvas")
+    const ctx = canvas.getContext("2d")
+
+    canvas.width = window.innerWidth
+    canvas.height = window.innerHeight
+
+    const particles = []
+    const condition = this.currentWeatherData?.condition?.toLowerCase() || "clear"
+
+    // Create particles based on weather condition
+    this.createWeatherParticles(particles, condition, canvas)
+
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+      particles.forEach((particle, index) => {
+        this.updateParticle(particle, condition, canvas, ctx)
+      })
+
+      this.weatherAnimationId = requestAnimationFrame(animate)
+    }
+
+    animate()
+
+    // Handle window resize
+    window.addEventListener("resize", () => {
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
+    })
+  }
+
+  createWeatherParticles(particles, condition, canvas) {
+    let particleCount = 0
+
+    switch (condition) {
+      case "rain":
+      case "rainy":
+        particleCount = 100
+        break
+      case "snow":
+      case "snowy":
+        particleCount = 50
+        break
+      case "clear":
+      case "sunny":
+        particleCount = 20
+        break
+      default:
+        particleCount = 0
+    }
+
+    for (let i = 0; i < particleCount; i++) {
+      particles.push(this.createParticle(condition, canvas))
+    }
+  }
+
+  createParticle(condition, canvas) {
+    const particle = {
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      opacity: Math.random() * 0.5 + 0.3,
+    }
+
+    switch (condition) {
+      case "rain":
+      case "rainy":
+        particle.speed = Math.random() * 5 + 5
+        particle.length = Math.random() * 20 + 10
+        break
+      case "snow":
+      case "snowy":
+        particle.speed = Math.random() * 2 + 1
+        particle.size = Math.random() * 4 + 2
+        break
+      case "clear":
+      case "sunny":
+        particle.speed = Math.random() * 0.5 + 0.2
+        particle.size = Math.random() * 3 + 1
+        particle.angle = Math.random() * Math.PI * 2
+        break
+    }
+
+    return particle
+  }
+
+  updateParticle(particle, condition, canvas, ctx) {
+    switch (condition) {
+      case "rain":
+      case "rainy":
+        ctx.strokeStyle = `rgba(100, 200, 255, ${particle.opacity})`
+        ctx.lineWidth = 1
+        ctx.beginPath()
+        ctx.moveTo(particle.x, particle.y)
+        ctx.lineTo(particle.x, particle.y + particle.length)
+        ctx.stroke()
+
+        particle.y += particle.speed
+        if (particle.y > canvas.height) {
+          particle.y = -particle.length
+          particle.x = Math.random() * canvas.width
+        }
+        break
+
+      case "snow":
+      case "snowy":
+        ctx.fillStyle = `rgba(255, 255, 255, ${particle.opacity})`
+        ctx.beginPath()
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2)
+        ctx.fill()
+
+        particle.y += particle.speed
+        particle.x += Math.sin(particle.y * 0.01) * 0.5
+        if (particle.y > canvas.height) {
+          particle.y = -particle.size
+          particle.x = Math.random() * canvas.width
+        }
+        break
+
+      case "clear":
+      case "sunny":
+        ctx.fillStyle = `rgba(255, 215, 0, ${particle.opacity})`
+        ctx.beginPath()
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2)
+        ctx.fill()
+
+        particle.x += Math.cos(particle.angle) * particle.speed
+        particle.y += Math.sin(particle.angle) * particle.speed
+        particle.angle += 0.01
+
+        if (particle.x < 0 || particle.x > canvas.width || particle.y < 0 || particle.y > canvas.height) {
+          particle.x = Math.random() * canvas.width
+          particle.y = Math.random() * canvas.height
+        }
+        break
+    }
+  }
+
+  refreshData() {
+    // Simulate data refresh
+    console.log("Refreshing data...")
+    this.loadWeatherData()
+  }
+}
+
+// Initialize the app when DOM is loaded
+document.addEventListener("DOMContentLoaded", () => {
+  new WeatherApp()
+})
+
+    </script>
+</body>
+</html>

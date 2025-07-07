@@ -1,0 +1,9 @@
+{
+"type": "FeatureCollection",
+"name": "vijayawada_industries",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "element": "way", "id": 280460648 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 80.5886088, 16.5353566 ], [ 80.5901609, 16.5347163 ], [ 80.5889756, 16.5318756 ], [ 80.5881377, 16.5324095 ], [ 80.5874235, 16.532827 ], [ 80.5884818, 16.5348246 ], [ 80.5886088, 16.5353566 ] ] ] } },
+{ "type": "Feature", "properties": { "element": "way", "id": 1269109059 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 80.6438628, 16.5790336 ], [ 80.6441999, 16.5798673 ], [ 80.6444004, 16.5803548 ], [ 80.6454255, 16.5800541 ], [ 80.645061, 16.5786144 ], [ 80.6438628, 16.5790336 ] ] ] } }
+]
+}

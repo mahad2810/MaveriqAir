@@ -1,0 +1,36 @@
+Problem Statement-7
+Overview
+Developing an Algorithm for Air Quality Visualizer and Forecast App to Generate Granular, Real-time, and Predictive Air Quality Information
+An intuitive air quality visualizer and forecasting tool designed to bridge the data gap for underserved regions. While most AQI (Air Quality Index) apps focus on large metropolitan areas, this idea aims to develop an application that delivers hyperlocal, real-time, and predictive air quality insights—even in small towns and rural areas.
+
+Objective:
+Display real-time AQI from both ground stations and satellite sources.
+Visualize historical AQI trends with location filters.
+Integrate meteorological data to forecast air quality 24–72 hours ahead.
+Provide health recommendations based on pollution levels.
+(Optional) Map pollution sources (e.g., traffic, factories, crop burning).
+Expected Outcomes:
+Real-Time, Location-Based AQI Updates.
+Personalized Health Alerts & Recommendations.
+Predictive AQI Forecasting.
+Interactive AQI HeatMaps.
+Push Alerts for certain threshold.
+Dataset Required:
+AQI Dataset from IMD/CPCB/ISRO.
+Suggested Tools/Technologies:
+UI and Frameworks: Flutter, React
+Backend Architecture: Supabase DB, Firebase Notifications, Node.js + Express, Python
+API and Data: Bhuvan Maps / Google Maps API, Satellite/CPCB data for AQI
+Forecasting: TensorFlowLite, Hugging Face predictive models API
+Testing: Jest
+Analytics: Firebase Analytics, Google Analytics
+Expected Solution / Steps to be followed to achieve the objectives:
+AQI Map: Select a city or pin your location. Pull latest AQI from CPCB and visualize satellite-derived pollution. Use color-coded zones (Green = Good, Red = Hazardous).
+Historical Trends: Graph AQI/PM2.5/NO₂ over weeks or months. Show satellite images over time for visual correlation.
+Forecasting (Optional): Use weather + historical AQI to train a model to predict next 3 days’ pollution level. Show forecast as line chart or animated map.
+Health & Advisory Dashboard: Display actionable suggestions: 'Wear a mask', 'Avoid jogging', 'Use air purifier'. Use AQI breakpoints from WHO or Indian standards.
+Advanced Ideas for Bonus Points:
+Add push notifications for pollution spikes.
+Show pollution source heatmaps using vehicle density and industrial zones.
+Offer API for developers or cities to integrate into other systems.
+Link to emergency response tools for high AQI alerts in schools or hospitals.

@@ -1,0 +1,10 @@
+{
+  "name": "air-quality-insight-api",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "express": "^4.21.2",
+    "nodemailer": "^7.0.4",
+    "zod": "^3.24.2"
+  }
+} 

@@ -4,7 +4,16 @@
   "outputDirectory": "dist/public",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/index.js" },
+    { "source": "/Geojson/(.*)", "destination": "/Geojson/$1" },
+    { "source": "/Images/(.*)", "destination": "/Images/$1" },
+    { "source": "/map.html", "destination": "/map.html" },
     { "source": "/(assets|images|css|js)/(.*)", "destination": "/$1/$2" },
     { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "routes": [
+    { "src": "/Geojson/(.*)", "dest": "/Geojson/$1" },
+    { "src": "/Images/(.*)", "dest": "/Images/$1" },
+    { "src": "/map.html", "dest": "/map.html" },
+    { "src": "/MaveriqAir-Logo.png", "dest": "/MaveriqAir-Logo.png" }
   ]
-} 
+}

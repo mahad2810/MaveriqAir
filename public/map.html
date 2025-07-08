@@ -1415,13 +1415,27 @@ console.log("L.Control.Fullscreen:", typeof L.Control.Fullscreen); // should be 
   console.log("[DEBUG] L.heatLayer available?", typeof L.heatLayer);
 
   const overlays = {
-    no2: L.tileLayer('https://earthengine.googleapis.com/v1/projects/auramed-455016/maps/87cc5cd901bc68dc6fdffa0f36d3aaff-0e41299ad40395508cfb9934e4fa9954/tiles/{z}/{x}/{y}', { attribution: 'Sentinel-5P NO₂' }),
-    co: L.tileLayer('https://earthengine.googleapis.com/v1/projects/auramed-455016/maps/33a630d000993cc359d7147b3f63c765-d9a2e14e1037544c6a42e0852b4238a9/tiles/{z}/{x}/{y}', { attribution: 'Sentinel-5P CO' }),
-    so2: L.tileLayer('https://earthengine.googleapis.com/v1/projects/auramed-455016/maps/a46ab02b783ecc42c7b1723d7c0c5767-53ac9ff2d1e692260a507078cf11a589/tiles/{z}/{x}/{y}', { attribution: 'Sentinel-5P SO₂' }),
-    o3: L.tileLayer('https://earthengine.googleapis.com/v1/projects/auramed-455016/maps/959d0addd082022e1745998d1693ab3c-cfd47c97e347748143617e8a6b79b9b6/tiles/{z}/{x}/{y}', { attribution: 'Sentinel-5P O₃' }),
-    hcho: L.tileLayer('https://earthengine.googleapis.com/v1/projects/auramed-455016/maps/cf6359f575725d32141fcef2baa81d6c-f16f450aa77f96274dd8c7b7d91288e5/tiles/{z}/{x}/{y}', { attribution: 'Sentinel-5P HCHO' }),
-    aerosol: L.tileLayer('https://earthengine.googleapis.com/v1/projects/auramed-455016/maps/293d5c1919a1643c599cb6b2ffa0c845-3d7a91b1b788784b1a5353eaee3da900/tiles/{z}/{x}/{y}', { attribution: 'Sentinel-5P Aerosol Index' })
-  };
+  no2: L.tileLayer('https://earthengine.googleapis.com/v1/projects/earthengine-legacy/maps/d9c09166eb3a60742c0e64d1b5ddd98a-b19e207ed6f8cbacbc13ba55c0b074d2/tiles/{z}/{x}/{y}', {
+    attribution: 'Sentinel-5P NO₂'
+  }),
+  co: L.tileLayer('https://earthengine.googleapis.com/v1/projects/earthengine-legacy/maps/0eaa22ddb3681f3c930d82d2bd04f31d-bf8d3ca2f2b9b01cc39888f4472d5f14/tiles/{z}/{x}/{y}', {
+    attribution: 'Sentinel-5P CO'
+  }),
+  so2: L.tileLayer('https://earthengine.googleapis.com/v1/projects/earthengine-legacy/maps/d71435d8601ab9af48b9f50e6910cbe7-a710b3004f30886fa52c698ddaaf4b8b/tiles/{z}/{x}/{y}', {
+    attribution: 'Sentinel-5P SO₂'
+  }),
+  o3: L.tileLayer('https://earthengine.googleapis.com/v1/projects/earthengine-legacy/maps/d18c69899d7aab1c7405b7935b724073-791f32b3c4e332f61fdcd662aa0051f6/tiles/{z}/{x}/{y}', {
+    attribution: 'Sentinel-5P O₃'
+  }),
+  hcho: L.tileLayer('https://earthengine.googleapis.com/v1/projects/earthengine-legacy/maps/693d386ffde687b7867f21c17ecfe676-d0116921145031839b675837ea538b47/tiles/{z}/{x}/{y}', {
+    attribution: 'Sentinel-5P HCHO'
+  }),
+  aerosol: L.tileLayer('https://earthengine.googleapis.com/v1/projects/earthengine-legacy/maps/226d9c2086c4f379a86c1004a13d4b61-c7382ae91a5c1f80e31f0545ed725a65/tiles/{z}/{x}/{y}', {
+    attribution: 'Sentinel-5P Aerosol Index'
+  })
+};
+
+
   overlays.no2.addTo(map);
   let currentOverlay = overlays.no2;
 
@@ -1519,6 +1533,22 @@ console.log("L.Control.Fullscreen:", typeof L.Control.Fullscreen); // should be 
 }, error => {
   console.error("[ERROR] Geolocation failed:", error);
 });
+map.on('click', async function (e) {
+  const { lat, lng } = e.latlng;
+
+  // 🧭 Add a clicked location marker
+  L.marker([lat, lng], { icon: clickedLocationIcon }).addTo(map)
+    .bindPopup(`Clicked Location<br><small>[${lat.toFixed(4)}, ${lng.toFixed(4)}]</small>`,{ offset: L.point(0, -20) })
+    .openPopup();
+
+  // 🌫️ Fetch AQI data for clicked location
+  const airData = await self.fetchAirData(lat, lng);
+  const heatValue = Math.min(Math.max(airData.pollution.aqicn / 300, 0.1), 1.0);
+  currentHeatLayer.addLatLng([lat, lng, heatValue]);
+
+  updateMapInfo(lat, lng, airData);
+});
+
 }
 
 

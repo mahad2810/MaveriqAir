@@ -1,32 +1,44 @@
 // technology.tsx
 import { Card, CardContent } from "@/components/ui/card";
-import { Satellite, Cloud, BarChart, Brain } from "lucide-react";
+import { Satellite, Cloud, BarChart, Brain, AlertTriangle, MapPin } from "lucide-react";
 
 export default function Technology() {
   const technologies = [
     {
       icon: Satellite,
-      title: "ISRO Satellite Data",
-      description: "High-resolution satellite imagery and atmospheric data",
-      color: "bg-info text-background"
+      title: "Satellite Pollutant Mapping",
+      description: "Sentinel-5P data via Google Earth Engine (NO₂, CO, SO₂, O₃, etc.)",
+      color: "bg-blue-500 text-background"
     },
     {
       icon: Cloud,
-      title: "IMD Weather Data",
-      description: "Meteorological data from India Meteorological Department",
-      color: "bg-success text-background"
+      title: "Weather Forecasting",
+      description: "Real-time and historical weather data via Meteostat API",
+      color: "bg-green-500 text-background"
     },
     {
       icon: BarChart,
-      title: "CPCB Ground Stations",
-      description: "Real-time data from Central Pollution Control Board",
-      color: "bg-critical text-background"
+      title: "CPCB Ground Station AQI",
+      description: "Live AQI and pollutant metrics from 700+ CPCB stations",
+      color: "bg-red-500 text-background"
     },
     {
       icon: Brain,
-      title: "ML Forecasting",
-      description: "TensorFlow models for predictive air quality analysis",
-      color: "bg-warning text-black"
+      title: "Machine Learning Forecasting",
+      description: "XGBoost model for AQI prediction using weather and pollutant trends",
+      color: "bg-yellow-300 text-black"
+    },
+    {
+      icon: AlertTriangle,
+      title: "Fire & Emission Data",
+      description: "VIIRS satellite fire detection via NASA FIRMS API",
+      color: "bg-orange-500 text-background"
+    },
+    {
+      icon: MapPin,
+      title: "Location & Map Intelligence",
+      description: "OpenStreetMap for roads/industries, OpenCage for geocoding",
+      color: "bg-purple-600 text-background"
     }
   ];
 
@@ -38,7 +50,7 @@ export default function Technology() {
             Built on Trusted Data Sources
           </h2>
           <p className="text-xl text-muted-foreground">
-            Leveraging official government and international environmental agencies
+            Leveraging global and national environmental datasets for accuracy and impact
           </p>
         </div>
 
@@ -52,7 +64,7 @@ export default function Technology() {
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-xl flex items-end">
               <div className="p-6 text-white">
                 <h3 className="text-xl font-semibold mb-2">Satellite Integration</h3>
-                <p className="text-sm text-muted-foreground">Real-time atmospheric data from ISRO satellites</p>
+                <p className="text-sm text-muted-foreground">Pollutant heatmaps from Sentinel-5P via GEE</p>
               </div>
             </div>
           </div>
@@ -65,14 +77,14 @@ export default function Technology() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-xl flex items-end">
               <div className="p-6 text-white">
-                <h3 className="text-xl font-semibold mb-2">Ground Station Network</h3>
-                <p className="text-sm text-muted-foreground">Comprehensive monitoring from CPCB and IMD stations</p>
+                <h3 className="text-xl font-semibold mb-2">Ground & Weather Stations</h3>
+                <p className="text-sm text-muted-foreground">Data from CPCB, Meteostat, and OSM overlays</p>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {technologies.map((tech, index) => (
             <Card key={index} className="glass-card hover:shadow-lg transition-shadow duration-300">
               <CardContent className="p-6 text-center">

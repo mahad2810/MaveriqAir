@@ -845,7 +845,7 @@ body {
   box-shadow: 0 0 15px rgba(255, 0, 0, 0.8);
 }
 
-/* Hamburger Menu (mobile only) */
+/* Hamburger Menu (mobile only, inside navbar) */
 .hamburger {
   display: none;
   font-size: 2rem;
@@ -853,7 +853,6 @@ body {
   cursor: pointer;
   margin-left: auto;
 }
-
 /* Sidebar Menu */
 .mobile-sidebar {
   position: fixed;
@@ -937,11 +936,13 @@ body {
     </a>
     <button class="aqi-forecaster-btn sos-btn" onclick="handleSOS()">SOS</button>
   </div>
-</nav>
-<!-- Hamburger Icon (mobile only) -->
-<div class="hamburger" onclick="toggleSidebar()">
+  <!-- Hamburger Icon (mobile only) -->
+  <div class="hamburger" onclick="toggleSidebar()">
   ☰
 </div>
+</nav>
+
+
 
 <!-- Sidebar Menu -->
 <div id="mobile-sidebar" class="mobile-sidebar">

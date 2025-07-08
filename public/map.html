@@ -776,12 +776,11 @@ body {
   position: sticky;
   top: 0;
   z-index: 1000;
-
   padding: 1rem 2rem;
   background: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  flex-wrap: wrap; /* Allow wrapping */
+  flex-wrap: wrap;
 }
 
 /* Logo + Title */
@@ -802,7 +801,7 @@ body {
   font-weight: 600;
 }
 
-/* Right Buttons */
+/* Right Buttons (desktop only) */
 .navbar-right {
   display: flex;
   align-items: center;
@@ -846,32 +845,82 @@ body {
   box-shadow: 0 0 15px rgba(255, 0, 0, 0.8);
 }
 
-/* Responsive: Stack buttons + center items on small screens */
+/* Hamburger Menu (mobile only) */
+.hamburger {
+  display: none;
+  font-size: 2rem;
+  color: white;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+/* Sidebar Menu */
+.mobile-sidebar {
+  position: fixed;
+  top: 0;
+  right: -250px;
+  height: 100%;
+  width: 250px;
+  background-color: #1a1a1a;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.5);
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  transition: right 0.3s ease;
+  z-index: 1500;
+}
+
+.mobile-sidebar a,
+.mobile-sidebar button {
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  text-align: center;
+  cursor: pointer;
+  text-decoration: none;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.mobile-sidebar a {
+  background-color: #06b6d4;
+  color: #000000;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.mobile-sidebar a:hover {
+  background-color: #00ffff;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
+}
+
+.mobile-sidebar button {
+  background-color: #ef4444;
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+}
+
+.mobile-sidebar button:hover {
+  background-color: #ff0000;
+  box-shadow: 0 0 15px rgba(255, 0, 0, 0.8);
+}
+
+/* Responsive Styles */
 @media (max-width: 640px) {
   .navbar {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 1rem;
-  }
-
-  .navbar-left {
-    justify-content: center;
-    margin-bottom: 1rem;
+    flex-direction: row;
+    align-items: center;
   }
 
   .navbar-right {
-    flex-direction: column;
-    align-items: flex-start;
-    width: 100%;
-    gap: 0.75rem;
+    display: none;
   }
 
-  .navbar-right .aqi-forecaster-btn,
-  .navbar-right .sos-btn {
-    width: 100%;
-    text-align: center;
+  .hamburger {
+    display: block;
   }
 }
+
 
 
     </style>
@@ -889,8 +938,20 @@ body {
     <button class="aqi-forecaster-btn sos-btn" onclick="handleSOS()">SOS</button>
   </div>
 </nav>
+<!-- Hamburger Icon (mobile only) -->
+<div class="hamburger" onclick="toggleSidebar()">
+  ☰
+</div>
+
+<!-- Sidebar Menu -->
+<div id="mobile-sidebar" class="mobile-sidebar">
+  <a href="https://aqipredictorapp28.streamlit.app/" target="_blank">AQI Forecaster</a>
+  <button onclick="handleSOS()">SOS</button>
+</div>
+
 <!-- Message Display -->
 <div id="sos-status" style="color: white; text-align: center; margin-top: 1rem;"></div>
+
     <div class="app-container">
         <!-- Weather Animation Canvas -->
         <canvas id="weather-canvas" class="weather-canvas"></canvas>
@@ -2064,6 +2125,10 @@ document.getElementById('pollution-map').appendChild(legend);
 document.addEventListener("DOMContentLoaded", () => {
   new WeatherApp()
 })
+function toggleSidebar() {
+  const sidebar = document.getElementById("mobile-sidebar");
+  sidebar.style.right = sidebar.style.right === "0px" ? "-250px" : "0px";
+}
 async function handleSOS() {
   const statusDiv = document.getElementById("sos-status");
   statusDiv.textContent = "Recording SOS message...";

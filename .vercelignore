@@ -15,6 +15,7 @@ node_modules
 .env.development.local
 .env.test.local
 .env.production.local
+# Don't ignore .env.example as it provides a template for required variables
 
 # Log files
 npm-debug.log*

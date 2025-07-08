@@ -7,13 +7,37 @@
     { "source": "/Geojson/(.*)", "destination": "/Geojson/$1" },
     { "source": "/Images/(.*)", "destination": "/Images/$1" },
     { "source": "/map.html", "destination": "/map.html" },
+    { "source": "/MaveriqAir-Logo.png", "destination": "/MaveriqAir-Logo.png" },
     { "source": "/(assets|images|css|js)/(.*)", "destination": "/$1/$2" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
-  "routes": [
-    { "src": "/Geojson/(.*)", "dest": "/Geojson/$1" },
-    { "src": "/Images/(.*)", "dest": "/Images/$1" },
-    { "src": "/map.html", "dest": "/map.html" },
-    { "src": "/MaveriqAir-Logo.png", "dest": "/MaveriqAir-Logo.png" }
+  "headers": [
+    {
+      "source": "/Geojson/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=604800, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/Images/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=604800, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/(assets|images|css|js)/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        }
+      ]
+    }
   ]
 }

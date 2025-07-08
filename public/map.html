@@ -781,6 +781,7 @@ body {
   background: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex-wrap: wrap; /* Allow wrapping */
 }
 
 /* Logo + Title */
@@ -801,23 +802,75 @@ body {
   font-weight: 600;
 }
 
-/* Right Button */
-.navbar-right .aqi-forecaster-btn {
-  background-color: #06b6d4;
-  color: #000000;
+/* Right Buttons */
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.navbar-right .aqi-forecaster-btn,
+.navbar-right .sos-btn {
   padding: 0.5rem 1rem;
   font-weight: 600;
   border: none;
   border-radius: 0.5rem;
   text-decoration: none;
-  box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
   transition: all 0.3s ease;
   cursor: pointer;
+}
+
+/* AQI Button */
+.navbar-right .aqi-forecaster-btn {
+  background-color: #06b6d4;
+  color: #000000;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
 }
 
 .navbar-right .aqi-forecaster-btn:hover {
   background-color: #00ffff;
   box-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
+}
+
+/* SOS Button */
+.navbar-right .sos-btn {
+  background-color: #ef4444;
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+}
+
+.navbar-right .sos-btn:hover {
+  background-color: #ff0000;
+  box-shadow: 0 0 15px rgba(255, 0, 0, 0.8);
+}
+
+/* Responsive: Stack buttons + center items on small screens */
+@media (max-width: 640px) {
+  .navbar {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1rem;
+  }
+
+  .navbar-left {
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+
+  .navbar-right {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    gap: 0.75rem;
+  }
+
+  .navbar-right .aqi-forecaster-btn,
+  .navbar-right .sos-btn {
+    width: 100%;
+    text-align: center;
+  }
 }
 
 
@@ -826,16 +879,18 @@ body {
 <body>
   <nav class="navbar">
   <div class="navbar-left">
-  <img src="./MaveriqAir-Logo.png" alt="Logo" class="navbar-logo" />
-  <span class="navbar-title">MaveriqAir</span>
-</div>
+    <img src="./MaveriqAir-Logo.png" alt="Logo" class="navbar-logo" />
+    <span class="navbar-title">MaveriqAir</span>
+  </div>
   <div class="navbar-right">
     <a href="https://aqipredictorapp28.streamlit.app/" class="aqi-forecaster-btn" target="_blank">
-      AQI forecaster
+      AQI Forecaster
     </a>
+    <button class="aqi-forecaster-btn sos-btn" onclick="handleSOS()">SOS</button>
   </div>
 </nav>
-
+<!-- Message Display -->
+<div id="sos-status" style="color: white; text-align: center; margin-top: 1rem;"></div>
     <div class="app-container">
         <!-- Weather Animation Canvas -->
         <canvas id="weather-canvas" class="weather-canvas"></canvas>
@@ -2009,7 +2064,36 @@ document.getElementById('pollution-map').appendChild(legend);
 document.addEventListener("DOMContentLoaded", () => {
   new WeatherApp()
 })
+async function handleSOS() {
+  const statusDiv = document.getElementById("sos-status");
+  statusDiv.textContent = "Recording SOS message...";
 
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const mediaRecorder = new MediaRecorder(stream);
+    const chunks = [];
+
+    mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(chunks, { type: 'audio/webm' });
+
+      // You can send this blob to a backend or save it
+      console.log("Recorded audio blob:", blob);
+
+      statusDiv.textContent = "Your SOS message has been sent!";
+    };
+
+    mediaRecorder.start();
+
+    // Stop recording after 10 seconds
+    setTimeout(() => {
+      mediaRecorder.stop();
+    }, 10000);
+  } catch (err) {
+    console.error("Microphone access error:", err);
+    statusDiv.textContent = "Failed to record. Please allow microphone access.";
+  }
+}
     </script>
 </body>
 </html>

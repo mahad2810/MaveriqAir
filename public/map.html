@@ -4,19 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MaveriqAir</title>
+    <!-- Leaflet for AQI and Pollution Maps -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 
-     <!-- Leaflet core -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Mapbox GL JS for Pollution Source Map -->
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
 
-<!-- Leaflet Heat Plugin -->
-<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <!-- Google Maps API for Directions -->
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCjuDw-3FvARQROjvNiWJFTC_M2bMh4dfQ&libraries=places,geometry&callback=initGoogleMaps"></script>
 
-<!-- Leaflet Fullscreen Plugin -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet.fullscreen@2.4.0/Control.FullScreen.css" />
-<script src="https://unpkg.com/leaflet.fullscreen@2.4.0/Control.FullScreen.js"></script>
+
 
 
 
@@ -189,6 +189,15 @@ body {
   }
   50% {
     opacity: 0.7;
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
   }
 }
 
@@ -727,6 +736,601 @@ body {
   }
 }
 
+/* Enhanced Directions Tab Styles */
+.directions-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 0.5rem;
+}
+
+.directions-input {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(0, 0, 0, 0.2) 100%);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(20px);
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.input-group label {
+  font-size: 0.875rem;
+  color: #06b6d4;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.input-group input {
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(6, 182, 212, 0.3);
+  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.input-group input::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: #06b6d4;
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+/* Autocomplete Dropdown */
+.autocomplete-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  display: none;
+}
+
+.autocomplete-item {
+  padding: 0.75rem;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background-color 0.2s;
+}
+
+.autocomplete-item:hover,
+.autocomplete-item.selected {
+  background: rgba(6, 182, 212, 0.2);
+}
+
+.autocomplete-item:last-child {
+  border-bottom: none;
+}
+
+.place-name {
+  color: white;
+  font-weight: 500;
+}
+
+.place-details {
+  color: #9ca3af;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+.directions-controls {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.btn {
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn:hover::before {
+  left: 100%;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+  color: #000;
+  border: 2px solid transparent;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(6, 182, 212, 0.4);
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
+  color: white;
+  border: 2px solid rgba(6, 182, 212, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.btn-secondary:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 100%);
+  border-color: rgba(6, 182, 212, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 255, 255, 0.1);
+}
+
+.btn-voice {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-voice:hover {
+  background: #dc2626;
+}
+
+.btn-voice.active {
+  background: #16a34a;
+  animation: pulse 2s infinite;
+}
+
+.directions-map-container {
+  position: relative;
+  height: 600px;
+  border-radius: 1rem;
+  overflow: hidden;
+  margin-top: 1.5rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(6, 182, 212, 0.2);
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(0, 0, 0, 0.2) 100%);
+}
+
+.directions-map {
+  width: 100%;
+  height: 100%;
+  border-radius: 1rem;
+}
+
+/* Enhanced map legend for waterlogging */
+.waterlog-legend {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(15px);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  z-index: 1000;
+  min-width: 200px;
+}
+
+.waterlog-legend h4 {
+  color: #06b6d4;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.8rem;
+}
+
+.legend-item img {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.legend-item:last-child {
+  margin-bottom: 0;
+}
+
+.fullscreen-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(0, 0, 0, 0.7);
+  border: none;
+  color: white;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  z-index: 1000;
+  transition: all 0.3s ease;
+}
+
+.fullscreen-btn:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.voice-status {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-top: 1rem;
+  display: none;
+}
+
+.voice-status.active {
+  display: block;
+}
+
+.voice-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #16a34a;
+  font-weight: 500;
+}
+
+.voice-wave {
+  width: 1rem;
+  height: 1rem;
+  background: #16a34a;
+  border-radius: 50%;
+  animation: pulse 1.5s infinite;
+}
+
+/* Route Guidance Panel */
+.route-guidance {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-top: 1rem;
+  display: none;
+}
+
+.guidance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.guidance-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #06b6d4;
+}
+
+.guidance-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.guidance-btn {
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.5rem;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.guidance-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.guidance-btn.active {
+  background: #06b6d4;
+  color: #000;
+}
+
+.current-instruction {
+  background: rgba(6, 182, 212, 0.1);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.instruction-icon {
+  width: 2rem;
+  height: 2rem;
+  background: #06b6d4;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.instruction-text {
+  font-size: 1rem;
+  font-weight: 500;
+  color: white;
+  margin-bottom: 0.25rem;
+}
+
+.instruction-distance {
+  font-size: 0.875rem;
+  color: #9ca3af;
+}
+
+.instructions-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.instruction-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background-color 0.2s;
+}
+
+.instruction-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.instruction-item:last-child {
+  border-bottom: none;
+}
+
+.instruction-step {
+  width: 1.5rem;
+  height: 1.5rem;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.instruction-content {
+  flex: 1;
+}
+
+.instruction-direction {
+  color: white;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+
+.instruction-road {
+  color: #9ca3af;
+  font-size: 0.75rem;
+}
+
+/* Map Modal Overlay */
+.map-modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+  display: none;
+  pointer-events: none;
+}
+
+.map-modal-overlay.active {
+  display: block;
+  pointer-events: auto;
+}
+
+.route-info-modal {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 380px;
+  max-width: calc(100vw - 2rem);
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(6, 182, 212, 0.1) 100%);
+  backdrop-filter: blur(25px);
+  border: 2px solid rgba(6, 182, 212, 0.3);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  pointer-events: auto;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #06b6d4;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: all 0.3s ease;
+}
+
+.modal-close:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.route-summary {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: rgba(6, 182, 212, 0.1);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  border-radius: 0.5rem;
+}
+
+.summary-item {
+  text-align: center;
+}
+
+.summary-label {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-bottom: 0.25rem;
+}
+
+.summary-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+}
+
+.navigation-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.nav-btn {
+  flex: 1;
+  padding: 0.75rem;
+  background: rgba(6, 182, 212, 0.2);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  border-radius: 0.5rem;
+  color: #06b6d4;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.nav-btn:hover {
+  background: rgba(6, 182, 212, 0.3);
+}
+
+.nav-btn.active {
+  background: #06b6d4;
+  color: #000;
+}
+
+.current-step {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  display: none;
+}
+
+.current-step.active {
+  display: block;
+}
+
+.step-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  background: #10b981;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  color: #000;
+  margin-bottom: 0.5rem;
+}
+
+.step-instruction {
+  font-size: 1rem;
+  font-weight: 500;
+  color: white;
+  margin-bottom: 0.25rem;
+}
+
+.step-details {
+  font-size: 0.875rem;
+  color: #9ca3af;
+}
+
+@media (max-width: 768px) {
+  .route-info-modal {
+    top: auto;
+    bottom: 1rem;
+    right: 1rem;
+    left: 1rem;
+    width: auto;
+    max-height: 50vh;
+  }
+
+  .route-summary {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
@@ -1078,6 +1682,10 @@ body {
                     <span class="tab-icon">❤️</span>
                     <span class="tab-label">Health Tips</span>
                 </button>
+                <button class="tab-button" data-tab="3">
+                    <span class="tab-icon">🗺️</span>
+                    <span class="tab-label">Directions</span>
+                </button>
             </div>
 
             <!-- Tab Content -->
@@ -1248,6 +1856,173 @@ body {
                         </div>
                     </div>
                 </div>
+
+                <!-- Directions Tab -->
+                <div class="tab-panel" id="tab-3">
+                    <div class="glass-card">
+                        <div class="tab-header">
+                            <h2>
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"></path>
+                                    <path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z"></path>
+                                </svg>
+                                Navigation & Directions
+                            </h2>
+                        </div>
+
+                        <div class="directions-container">
+                            <div class="directions-input">
+                                <div class="input-group">
+                                    <label for="from-input">
+                                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                            <path d="M12 1v6m0 6v6"></path>
+                                            <path d="m21 12-6-6-6 6-6-6"></path>
+                                        </svg>
+                                        Starting Point
+                                    </label>
+                                    <input type="text" id="from-input" placeholder="Enter your starting location in Kolkata..." autocomplete="off">
+                                    <div class="autocomplete-dropdown" id="from-dropdown"></div>
+                                </div>
+                                <div class="input-group">
+                                    <label for="to-input">
+                                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                            <circle cx="12" cy="10" r="3"></circle>
+                                        </svg>
+                                        Destination
+                                    </label>
+                                    <input type="text" id="to-input" placeholder="Enter your destination in Kolkata..." autocomplete="off">
+                                    <div class="autocomplete-dropdown" id="to-dropdown"></div>
+                                </div>
+                                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1rem;">
+                                    <button class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.8rem; border-radius: 0.5rem;" onclick="document.getElementById('from-input').value='Howrah Station, Kolkata'; document.getElementById('to-input').value='Salt Lake City, Kolkata';">🚂 Howrah → Salt Lake</button>
+                                    <button class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.8rem; border-radius: 0.5rem;" onclick="document.getElementById('from-input').value='Park Street, Kolkata'; document.getElementById('to-input').value='New Market, Kolkata';">🏪 Park St → New Market</button>
+                                    <button class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.8rem; border-radius: 0.5rem;" onclick="document.getElementById('from-input').value='Netaji Subhash Chandra Bose International Airport, Kolkata'; document.getElementById('to-input').value='Esplanade, Kolkata';">✈️ Airport → Esplanade</button>
+                                </div>
+                                <div class="directions-controls">
+                                    <button class="btn btn-primary" id="get-directions-btn">
+                                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                            <path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"></path>
+                                            <path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z"></path>
+                                        </svg>
+                                        Get Directions
+                                    </button>
+                                    <button class="btn btn-secondary" id="use-current-location-btn">
+                                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <path d="M12 6v6l4 2"></path>
+                                        </svg>
+                                        Use Current Location
+                                    </button>
+                                    <button class="btn btn-voice" id="voice-assistant-btn">
+                                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                            <line x1="12" y1="19" x2="12" y2="23"></line>
+                                            <line x1="8" y1="23" x2="16" y2="23"></line>
+                                        </svg>
+                                        Voice Assistant
+                                    </button>
+                                    <button class="btn btn-secondary" id="show-route-btn" style="display: none;">
+                                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                            <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                                            <path d="M8 21v-4a2 2 0 012-2h4a2 2 0 012 2v4"></path>
+                                        </svg>
+                                        Show Route Details
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="voice-status" id="voice-status">
+                                <div class="voice-indicator">
+                                    <div class="voice-wave"></div>
+                                    <span id="voice-text">Listening...</span>
+                                </div>
+                            </div>
+
+                            <div class="route-info" id="route-info" style="display: none; background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 0.75rem; padding: 1rem; margin-top: 1rem;">
+                                <h3 style="margin-bottom: 0.5rem; color: #06b6d4;">Route Information</h3>
+                                <div id="route-details" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem;">
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 0.875rem; color: #9ca3af;">Distance</div>
+                                        <div id="route-distance" style="font-size: 1.125rem; font-weight: 500;">--</div>
+                                    </div>
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 0.875rem; color: #9ca3af;">Duration</div>
+                                        <div id="route-duration" style="font-size: 1.125rem; font-weight: 500;">--</div>
+                                    </div>
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 0.875rem; color: #9ca3af;">Status</div>
+                                        <div id="route-status" style="font-size: 1.125rem; font-weight: 500;">Ready</div>
+                                    </div>
+                                </div>
+                            </div>
+
+
+
+                            <div class="directions-map-container">
+                                <div id="directions-map" class="directions-map"></div>
+                                <button class="fullscreen-btn" id="fullscreen-btn">
+                                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+                                    </svg>
+                                </button>
+
+                                <!-- Map Modal Overlay -->
+                                <div class="map-modal-overlay" id="map-modal-overlay">
+                                    <div class="route-info-modal" id="route-info-modal">
+                                        <div class="modal-header">
+                                            <h3 class="modal-title">Route Navigation</h3>
+                                            <button class="modal-close" id="modal-close-btn">
+                                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                                </svg>
+                                            </button>
+                                        </div>
+
+                                        <div class="route-summary" id="modal-route-summary">
+                                            <div class="summary-item">
+                                                <div class="summary-label">Distance</div>
+                                                <div class="summary-value" id="modal-distance">--</div>
+                                            </div>
+                                            <div class="summary-item">
+                                                <div class="summary-label">Duration</div>
+                                                <div class="summary-value" id="modal-duration">--</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="navigation-controls">
+                                            <button class="nav-btn" id="modal-start-nav">
+                                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                    <polygon points="5,3 19,12 5,21 5,3"></polygon>
+                                                </svg>
+                                                Start Navigation
+                                            </button>
+                                            <button class="nav-btn" id="modal-voice-toggle">
+                                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                    <polygon points="11,5 6,9 2,9 2,15 6,15 11,19 11,5"></polygon>
+                                                </svg>
+                                                Voice
+                                            </button>
+                                        </div>
+
+                                        <div class="current-step" id="modal-current-step">
+                                            <div class="step-icon" id="modal-step-icon">→</div>
+                                            <div class="step-instruction" id="modal-step-text">Starting navigation...</div>
+                                            <div class="step-details" id="modal-step-details">Preparing route...</div>
+                                        </div>
+
+                                        <div class="instructions-list" id="modal-instructions-list">
+                                            <!-- Instructions will be populated here -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -1271,8 +2046,65 @@ var colorPalettes = {
     this.maps = {
       aqi: null,
       pollution: null,
+      directions: null,
     }
     this.weatherAnimationId = null
+    this.currentRoute = null
+    this.navigationActive = false
+    this.currentInstructionIndex = 0
+    this.voiceGuidanceEnabled = false
+
+    // Google Maps configuration
+    this.googleMapsApiKey = 'AIzaSyCjuDw-3FvARQROjvNiWJFTC_M2bMh4dfQ'
+    this.googleMap = null
+    this.directionsService = null
+    this.directionsRenderer = null
+    this.placesService = null
+
+    // Waterlogging data for Kolkata roads
+    this.waterloggedRoads = [
+      { name: "AJC Bose Road", lat: 22.5413, lon: 88.3551, drainage: "weak" },
+      { name: "MG Road (central & Behala)", lat: 22.5699, lon: 88.3695, drainage: "weak" },
+      { name: "Chittaranjan Avenue", lat: 22.579, lon: 88.364, drainage: "weak" },
+      { name: "Amherst Street", lat: 22.593, lon: 88.359, drainage: "weak" },
+      { name: "Rabindra Sarani / Chitpur Road", lat: 22.581, lon: 88.349, drainage: "weak" },
+      { name: "Central Avenue / CR Avenue", lat: 22.579, lon: 88.36, drainage: "weak" },
+      { name: "Mukta Ram Babu / Thanthania St", lat: 22.58, lon: 88.357, drainage: "weak" },
+      { name: "Beadon Street", lat: 22.583, lon: 88.345, drainage: "weak" },
+      { name: "Beleghata Main Road", lat: 22.563, lon: 88.3954, drainage: "weak" },
+      { name: "Southern Avenue", lat: 22.5338, lon: 88.345, drainage: "moderate" },
+      { name: "Rashbehari Avenue / Gariahat", lat: 22.5216, lon: 88.3516, drainage: "moderate" },
+      { name: "Dover Lane", lat: 22.5215, lon: 88.3572, drainage: "moderate" },
+      { name: "Park Street / New Park St area", lat: 22.5527, lon: 88.3535, drainage: "moderate" },
+      { name: "CIT Road (Park Circus–Kankurgachi)", lat: 22.568, lon: 88.38, drainage: "moderate" },
+      { name: "Lake Gardens Flyover Connector", lat: 22.507, lon: 88.3385, drainage: "moderate" },
+      { name: "Salt Lake Sector V (internal)", lat: 22.5797, lon: 88.4303, drainage: "moderate" },
+      { name: "VIP Road (Chinar Park–Kestopur)", lat: 22.611, lon: 88.423, drainage: "moderate" },
+      { name: "Garia Main Road", lat: 22.4669, lon: 88.3946, drainage: "moderate" },
+      { name: "Raja SC Mullick Road (Jadavpur)", lat: 22.5032, lon: 88.3691, drainage: "moderate" },
+      { name: "Sarat Ghosh Garden Rd (Kasba)", lat: 22.5235, lon: 88.3698, drainage: "weak" },
+      { name: "BB Chatterjee Rd (Kasba)", lat: 22.5255, lon: 88.3705, drainage: "weak" },
+      { name: "Tiljala Masjid Bari Lane", lat: 22.525, lon: 88.3675, drainage: "weak" },
+      { name: "Sreedhar Roy Rd (Kasba/Topsia)", lat: 22.526, lon: 88.368, drainage: "weak" },
+      { name: "Ganesh Ghosh Lane (Kasba)", lat: 22.5265, lon: 88.3685, drainage: "weak" },
+      { name: "R.K. Chatterjee Rd (Kasba)", lat: 22.524, lon: 88.369, drainage: "weak" },
+      { name: "EM Bypass", lat: 22.535, lon: 88.395, drainage: "moderate" },
+      { name: "Prince Anwar Shah Road", lat: 22.5019, lon: 88.3622, drainage: "moderate" },
+      { name: "Ballygunge Circular Road", lat: 22.5268, lon: 88.3629, drainage: "moderate" },
+      { name: "Deshapran Sashmal Road", lat: 22.4931, lon: 88.3623, drainage: "moderate" },
+      { name: "Salt Lake Sector V", lat: 22.5792, lon: 88.4273, drainage: "best" },
+      { name: "New Town Major Arterial Road", lat: 22.5876, lon: 88.4716, drainage: "best" },
+      { name: "Biswa Bangla Sarani", lat: 22.6065, lon: 88.4693, drainage: "best" },
+      { name: "Rajdanga Main Road", lat: 22.5152, lon: 88.403, drainage: "best" },
+      { name: "Alipore Road", lat: 22.5315, lon: 88.3305, drainage: "best" }
+    ]
+
+    // Waterlogging thresholds
+    this.waterlogThresholds = {
+      weak: 20,
+      moderate: 40,
+      best: 80
+    }
 
     this.init()
   }
@@ -1520,6 +2352,8 @@ getConditionFromIcon(ic) {
       setTimeout(() => this.initAQIMap(), 100)
     } else if (tabId === 1 && !this.maps.pollution) {
       setTimeout(() => this.initPollutionMap(), 100)
+    } else if (tabId === 3 && !this.maps.directions) {
+      setTimeout(() => this.initDirectionsMap(), 100)
     }
   }
 
@@ -1550,28 +2384,47 @@ console.log("L.Control.Fullscreen:", typeof L.Control.Fullscreen); // should be 
   console.log("[DEBUG] L.heatLayer available?", typeof L.heatLayer);
 
   const overlays = {
-  no2: L.tileLayer('https://earthengine.googleapis.com/v1/projects/earthengine-legacy/maps/d9c09166eb3a60742c0e64d1b5ddd98a-b19e207ed6f8cbacbc13ba55c0b074d2/tiles/{z}/{x}/{y}', {
+  no2: L.tileLayer('https://earthengine.googleapis.com/v1/projects/auramed-455016/maps/0bb00e68a5cd24b20ae05af4240bc6b8-8d6c375b996183a6c1ef0f613de37f95/tiles/{z}/{x}/{y}', {
     attribution: 'Sentinel-5P NO₂'
   }),
-  co: L.tileLayer('https://earthengine.googleapis.com/v1/projects/earthengine-legacy/maps/0eaa22ddb3681f3c930d82d2bd04f31d-bf8d3ca2f2b9b01cc39888f4472d5f14/tiles/{z}/{x}/{y}', {
+  co: L.tileLayer('https://earthengine.googleapis.com/v1/projects/auramed-455016/maps/c1e3ac4830de5c4d9cc810b863de612e-178129f7452306dd197a3954e1c96061/tiles/{z}/{x}/{y}', {
     attribution: 'Sentinel-5P CO'
   }),
-  so2: L.tileLayer('https://earthengine.googleapis.com/v1/projects/earthengine-legacy/maps/d71435d8601ab9af48b9f50e6910cbe7-a710b3004f30886fa52c698ddaaf4b8b/tiles/{z}/{x}/{y}', {
+  so2: L.tileLayer('https://earthengine.googleapis.com/v1/projects/auramed-455016/maps/f15e1c58785e9f6100ad1a99078a0258-a3c0b8177087526bbf1b3b00efc9424d/tiles/{z}/{x}/{y}', {
     attribution: 'Sentinel-5P SO₂'
   }),
-  o3: L.tileLayer('https://earthengine.googleapis.com/v1/projects/earthengine-legacy/maps/d18c69899d7aab1c7405b7935b724073-791f32b3c4e332f61fdcd662aa0051f6/tiles/{z}/{x}/{y}', {
+  o3: L.tileLayer('https://earthengine.googleapis.com/v1/projects/auramed-455016/maps/fbba3d2ce4e889fbcaccfbb144b27f23-413ffa095066181f7ce4b7fe753090f6/tiles/{z}/{x}/{y}', {
     attribution: 'Sentinel-5P O₃'
   }),
-  hcho: L.tileLayer('https://earthengine.googleapis.com/v1/projects/earthengine-legacy/maps/693d386ffde687b7867f21c17ecfe676-d0116921145031839b675837ea538b47/tiles/{z}/{x}/{y}', {
+  hcho: L.tileLayer('https://earthengine.googleapis.com/v1/projects/auramed-455016/maps/f747adbaed8d3665fc1a81de451c3fd9-4727f44e138e444451080b46d2073556/tiles/{z}/{x}/{y}', {
     attribution: 'Sentinel-5P HCHO'
   }),
-  aerosol: L.tileLayer('https://earthengine.googleapis.com/v1/projects/earthengine-legacy/maps/226d9c2086c4f379a86c1004a13d4b61-c7382ae91a5c1f80e31f0545ed725a65/tiles/{z}/{x}/{y}', {
+  aerosol: L.tileLayer('https://earthengine.googleapis.com/v1/projects/auramed-455016/maps/974d56d588ad45ed41e0af1316f66b07-4cbc874c7af998d6ceea6abbe19a122b/tiles/{z}/{x}/{y}', {
     attribution: 'Sentinel-5P Aerosol Index'
   })
 };
 
+  // Add error handling and debugging for overlay tiles
+  Object.keys(overlays).forEach(key => {
+    overlays[key].on('tileerror', function(error) {
+      console.error(`[ERROR] Failed to load ${key} tile:`, error);
+    });
+
+    overlays[key].on('tileload', function() {
+      console.log(`[DEBUG] Successfully loaded ${key} tile`);
+    });
+
+    overlays[key].on('loading', function() {
+      console.log(`[DEBUG] Loading ${key} tiles...`);
+    });
+
+    overlays[key].on('load', function() {
+      console.log(`[DEBUG] Finished loading ${key} tiles`);
+    });
+  });
 
   overlays.no2.addTo(map);
+  console.log("[DEBUG] Added NO2 overlay to map");
   let currentOverlay = overlays.no2;
 
   const heatLayers = {
@@ -1585,6 +2438,9 @@ console.log("L.Control.Fullscreen:", typeof L.Control.Fullscreen); // should be 
 
   let currentHeatLayer = heatLayers.no2;
   currentHeatLayer.addTo(map);
+
+  // Load initial heat map data for major Indian cities
+  this.loadInitialHeatMapData();
 
   const currentLocationIcon = L.icon({
     iconUrl: './Images/marker-icon-2x-green.png',
@@ -1729,12 +2585,104 @@ map.on('click', async function (e) {
   }
 }
 
+// Load initial heat map data for major Indian cities
+async loadInitialHeatMapData() {
+  console.log("[DEBUG] Loading initial heat map data...");
+
+  // Major Indian cities with coordinates
+  const majorCities = [
+    { name: "Delhi", lat: 28.6139, lng: 77.2090 },
+    { name: "Mumbai", lat: 19.0760, lng: 72.8777 },
+    { name: "Bangalore", lat: 12.9716, lng: 77.5946 },
+    { name: "Kolkata", lat: 22.5726, lng: 88.3639 },
+    { name: "Chennai", lat: 13.0827, lng: 80.2707 },
+    { name: "Hyderabad", lat: 17.3850, lng: 78.4867 },
+    { name: "Pune", lat: 18.5204, lng: 73.8567 },
+    { name: "Ahmedabad", lat: 23.0225, lng: 72.5714 },
+    { name: "Jaipur", lat: 26.9124, lng: 75.7873 },
+    { name: "Lucknow", lat: 26.8467, lng: 80.9462 },
+    { name: "Kanpur", lat: 26.4499, lng: 80.3319 },
+    { name: "Nagpur", lat: 21.1458, lng: 79.0882 },
+    { name: "Indore", lat: 22.7196, lng: 75.8577 },
+    { name: "Bhopal", lat: 23.2599, lng: 77.4126 },
+    { name: "Visakhapatnam", lat: 17.6868, lng: 83.2185 },
+    { name: "Patna", lat: 25.5941, lng: 85.1376 },
+    { name: "Vadodara", lat: 22.3072, lng: 73.1812 },
+    { name: "Ghaziabad", lat: 28.6692, lng: 77.4538 },
+    { name: "Ludhiana", lat: 30.9010, lng: 75.8573 },
+    { name: "Coimbatore", lat: 11.0168, lng: 76.9558 }
+  ];
+
+  let loadedCount = 0;
+
+  for (const city of majorCities) {
+    try {
+      // Add delay to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      const airData = await this.fetchAirData(city.lat, city.lng);
+
+      if (airData && airData.pollution && airData.pollution.aqicn > 0) {
+        const aqi = airData.pollution.aqicn;
+
+        // Calculate heat value (0.1 to 1.0 based on AQI)
+        const heatValue = Math.min(Math.max(aqi / 300, 0.1), 1.0);
+
+        // Add to all heat layers with simulated pollutant values
+        Object.keys(heatLayers).forEach(pollutant => {
+          // Simulate different pollutant concentrations based on AQI
+          let pollutantValue = heatValue;
+
+          switch(pollutant) {
+            case 'no2':
+              pollutantValue = heatValue * (0.8 + Math.random() * 0.4); // 80-120% of base
+              break;
+            case 'co':
+              pollutantValue = heatValue * (0.6 + Math.random() * 0.8); // 60-140% of base
+              break;
+            case 'so2':
+              pollutantValue = heatValue * (0.4 + Math.random() * 0.6); // 40-100% of base
+              break;
+            case 'o3':
+              pollutantValue = heatValue * (0.7 + Math.random() * 0.6); // 70-130% of base
+              break;
+            case 'hcho':
+              pollutantValue = heatValue * (0.5 + Math.random() * 0.5); // 50-100% of base
+              break;
+            case 'aerosol':
+              pollutantValue = heatValue * (0.9 + Math.random() * 0.2); // 90-110% of base
+              break;
+          }
+
+          pollutantValue = Math.min(Math.max(pollutantValue, 0.1), 1.0);
+          heatLayers[pollutant].addLatLng([city.lat, city.lng, pollutantValue]);
+        });
+
+        loadedCount++;
+        console.log(`[DEBUG] Loaded data for ${city.name}: AQI ${aqi}`);
+      } else {
+        console.warn(`[WARN] No data available for ${city.name}`);
+      }
+    } catch (error) {
+      console.error(`[ERROR] Failed to load data for ${city.name}:`, error);
+    }
+  }
+
+  console.log(`[DEBUG] Heat map data loading complete. Loaded ${loadedCount}/${majorCities.length} cities.`);
+
+  // Refresh the current heat layer to show new data
+  if (currentHeatLayer) {
+    currentHeatLayer.redraw();
+  }
+}
+
   initPollutionMap() {
   try {
     const mapContainer = document.getElementById("pollution-map");
     if (!mapContainer || this.maps.pollution) return;
 
-    mapContainer.innerHTML = '<div id="map" style="width: 100%; height: 100%"></div>';
+    // Clear any existing content
+    mapContainer.innerHTML = '';
     this.setupPollutionSourcesMap();
     this.maps.pollution = true;
   } catch (error) {
@@ -2138,12 +3086,1858 @@ document.getElementById('pollution-map').appendChild(legend);
     console.log("Refreshing data...")
     this.loadWeatherData()
   }
+
+  // Directions Map Initialization
+  initDirectionsMap() {
+    try {
+      const mapContainer = document.getElementById("directions-map");
+      if (!mapContainer || this.maps.directions) return;
+
+      this.setupDirectionsMap();
+      this.setupDirectionsControls();
+      this.setupVoiceAssistant();
+      this.maps.directions = true;
+    } catch (error) {
+      console.error("Error initializing directions map:", error);
+    }
+  }
+
+  setupDirectionsMap() {
+    try {
+      // Initialize Google Map for directions
+      this.googleMap = new google.maps.Map(document.getElementById('directions-map'), {
+        center: { lat: 22.5726, lng: 88.3639 }, // Kolkata center
+        zoom: 12,
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        styles: [
+          {
+            featureType: "poi",
+            elementType: "labels",
+            stylers: [{ visibility: "off" }]
+          }
+        ],
+        mapTypeControl: true,
+        streetViewControl: true,
+        fullscreenControl: true,
+        zoomControl: true
+      });
+
+      // Initialize Google Maps services
+      this.directionsService = new google.maps.DirectionsService();
+      this.directionsRenderer = new google.maps.DirectionsRenderer({
+        draggable: true,
+        panel: null,
+        polylineOptions: {
+          strokeColor: '#06b6d4',
+          strokeWeight: 6,
+          strokeOpacity: 0.8
+        }
+      });
+      this.directionsRenderer.setMap(this.googleMap);
+
+      // Initialize Places service for autocomplete
+      this.placesService = new google.maps.places.PlacesService(this.googleMap);
+
+      // Add traffic layer
+      this.trafficLayer = new google.maps.TrafficLayer();
+      this.trafficLayer.setMap(this.googleMap);
+
+      // Load waterlogging data
+      this.loadWaterloggingDataGoogle();
+
+      // Get user's current location
+      this.getCurrentLocationGoogle();
+
+      // Setup autocomplete for input fields
+      this.setupGoogleAutocomplete();
+
+      // Add waterlogging legend
+      this.addWaterloggingLegend();
+
+      console.log('Google Maps directions map loaded successfully');
+
+    } catch (error) {
+      console.error('Failed to initialize Google Maps directions map:', error);
+      // Fallback to basic implementation
+      document.getElementById('directions-map').innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #666;">Map initialization failed. Please refresh the page.</div>';
+    }
+  }
+
+  getCurrentLocationGoogle() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        const userLocation = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        this.currentLocation = userLocation;
+
+        // Center map on user location
+        this.googleMap.setCenter(userLocation);
+        this.googleMap.setZoom(14);
+
+        // Add current location marker
+        const currentLocationMarker = new google.maps.Marker({
+          position: userLocation,
+          map: this.googleMap,
+          title: 'Your Current Location',
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 8,
+            fillColor: '#4285f4',
+            fillOpacity: 1,
+            strokeColor: '#ffffff',
+            strokeWeight: 2
+          }
+        });
+
+        const infoWindow = new google.maps.InfoWindow({
+          content: '<strong>📍 Your Current Location</strong>'
+        });
+
+        currentLocationMarker.addListener('click', () => {
+          infoWindow.open(this.googleMap, currentLocationMarker);
+        });
+
+      }, (error) => {
+        console.log("Geolocation error:", error);
+        // Default to Kolkata if geolocation fails
+        this.googleMap.setCenter({ lat: 22.5726, lng: 88.3639 });
+        this.googleMap.setZoom(12);
+      });
+    }
+  }
+
+  setupGoogleAutocomplete() {
+    const fromInput = document.getElementById('from-input');
+    const toInput = document.getElementById('to-input');
+
+    // Setup autocomplete for from input
+    const fromAutocomplete = new google.maps.places.Autocomplete(fromInput, {
+      componentRestrictions: { country: 'in' },
+      fields: ['place_id', 'geometry', 'name', 'formatted_address'],
+      types: ['establishment', 'geocode']
+    });
+
+    // Setup autocomplete for to input
+    const toAutocomplete = new google.maps.places.Autocomplete(toInput, {
+      componentRestrictions: { country: 'in' },
+      fields: ['place_id', 'geometry', 'name', 'formatted_address'],
+      types: ['establishment', 'geocode']
+    });
+
+    // Store selected places
+    fromAutocomplete.addListener('place_changed', () => {
+      const place = fromAutocomplete.getPlace();
+      if (place.geometry) {
+        fromInput.dataset.lat = place.geometry.location.lat();
+        fromInput.dataset.lng = place.geometry.location.lng();
+      }
+    });
+
+    toAutocomplete.addListener('place_changed', () => {
+      const place = toAutocomplete.getPlace();
+      if (place.geometry) {
+        toInput.dataset.lat = place.geometry.location.lat();
+        toInput.dataset.lng = place.geometry.location.lng();
+      }
+    });
+  }
+
+  getCurrentLocationForHereMap() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        const userLocation = { lat: position.coords.latitude, lng: position.coords.longitude };
+        this.hereMap.getViewPort().setCenter(userLocation);
+        this.currentLocation = userLocation;
+
+        // Add marker for current location
+        const currentLocationMarker = new H.map.Marker(userLocation, {
+          icon: new H.map.Icon('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="%234285f4" stroke="white" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="white"/></svg>', 24, 24)
+        });
+
+        this.hereMap.addObject(currentLocationMarker);
+      }, (error) => {
+        console.log("Geolocation error:", error);
+        // Default to Kolkata if geolocation fails
+        this.hereMap.getViewPort().setCenter({ lat: 22.5726, lng: 88.3639 });
+      });
+    }
+  }
+
+  setupDirectionsControls() {
+    const getDirectionsBtn = document.getElementById("get-directions-btn");
+    const useCurrentLocationBtn = document.getElementById("use-current-location-btn");
+    const fullscreenBtn = document.getElementById("fullscreen-btn");
+    const modalStartNavBtn = document.getElementById("modal-start-nav");
+    const modalVoiceBtn = document.getElementById("modal-voice-toggle");
+    const modalCloseBtn = document.getElementById("modal-close-btn");
+    const showRouteBtn = document.getElementById("show-route-btn");
+
+    getDirectionsBtn.addEventListener("click", () => {
+      this.calculateAndDisplayRoute();
+    });
+
+    useCurrentLocationBtn.addEventListener("click", () => {
+      this.useCurrentLocation();
+    });
+
+    fullscreenBtn.addEventListener("click", () => {
+      this.toggleFullscreen();
+    });
+
+    modalStartNavBtn.addEventListener("click", () => {
+      this.startNavigation();
+    });
+
+    modalVoiceBtn.addEventListener("click", () => {
+      this.toggleVoiceGuidance();
+    });
+
+    modalCloseBtn.addEventListener("click", () => {
+      this.hideRouteModal();
+    });
+
+    showRouteBtn.addEventListener("click", () => {
+      if (this.currentRoute) {
+        this.showRouteModal(this.currentRoute);
+      }
+    });
+
+    // Setup autocomplete for input fields
+    this.setupAutocomplete();
+  }
+
+  async calculateAndDisplayRoute() {
+    const fromInput = document.getElementById("from-input").value;
+    const toInput = document.getElementById("to-input").value;
+
+    if (!fromInput || !toInput) {
+      alert("Please enter both starting location and destination.");
+      return;
+    }
+
+    try {
+      // Show loading state
+      const getDirectionsBtn = document.getElementById("get-directions-btn");
+      const originalText = getDirectionsBtn.innerHTML;
+      getDirectionsBtn.innerHTML = '<div style="display: flex; align-items: center; gap: 0.5rem;"><div style="width: 1rem; height: 1rem; border: 2px solid #fff; border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>Calculating...</div>';
+      getDirectionsBtn.disabled = true;
+
+      // Get coordinates from autocomplete or geocode
+      const fromInputElement = document.getElementById("from-input");
+      const toInputElement = document.getElementById("to-input");
+
+      let fromCoords, toCoords;
+
+      // Check if coordinates are available from autocomplete
+      if (fromInputElement.dataset.lat && fromInputElement.dataset.lng) {
+        fromCoords = {
+          lat: parseFloat(fromInputElement.dataset.lat),
+          lng: parseFloat(fromInputElement.dataset.lng)
+        };
+      } else {
+        fromCoords = await this.googleGeocode(fromInput);
+      }
+
+      if (toInputElement.dataset.lat && toInputElement.dataset.lng) {
+        toCoords = {
+          lat: parseFloat(toInputElement.dataset.lat),
+          lng: parseFloat(toInputElement.dataset.lng)
+        };
+      } else {
+        toCoords = await this.googleGeocode(toInput);
+      }
+
+      if (!fromCoords || !toCoords) {
+        alert("Could not find one or both locations. Please check your addresses.");
+        getDirectionsBtn.innerHTML = originalText;
+        getDirectionsBtn.disabled = false;
+        return;
+      }
+
+      // Calculate route using Google Directions API
+      const request = {
+        origin: fromCoords,
+        destination: toCoords,
+        travelMode: google.maps.TravelMode.DRIVING,
+        avoidHighways: false,
+        avoidTolls: false,
+        optimizeWaypoints: true,
+        provideRouteAlternatives: true
+      };
+
+      this.directionsService.route(request, (result, status) => {
+        if (status === 'OK') {
+          // Display the route
+          this.directionsRenderer.setDirections(result);
+
+          const route = result.routes[0];
+          const leg = route.legs[0];
+
+          // Extract route information
+          const distance = leg.distance.text;
+          const duration = leg.duration.text;
+
+          // Check for waterlogging warnings
+          const warnings = this.checkWaterloggingWarningsGoogle(route.overview_path);
+
+          // Update route info
+          this.updateRouteInfo(distance, duration, warnings.length > 0 ? `Route found (${warnings.length} warnings)` : 'Route found');
+
+          // Parse instructions
+          const instructions = this.parseGoogleInstructions(leg.steps);
+
+          // Show route modal with warnings
+          this.showRouteModal({
+            distance,
+            duration,
+            instructions,
+            warnings
+          });
+
+          // Show warnings if any
+          if (warnings.length > 0) {
+            this.showWaterloggingWarnings(warnings);
+          }
+
+          document.getElementById("show-route-btn").style.display = "flex";
+
+          // Voice directions with warnings
+          const warningText = warnings.length > 0 ? ` Warning: ${warnings.length} waterlogged area${warnings.length > 1 ? 's' : ''} detected along route.` : '';
+          this.speakDirections(`Route calculated from ${fromInput} to ${toInput}. Distance: ${distance}, Duration: ${duration}.${warningText}`);
+
+        } else {
+          console.error('Directions request failed due to ' + status);
+          alert("Could not calculate route. Please try different locations.");
+        }
+
+        // Restore button
+        getDirectionsBtn.innerHTML = originalText;
+        getDirectionsBtn.disabled = false;
+      });
+
+    } catch (error) {
+      console.error("Error calculating route:", error);
+      alert("Error calculating route. Please try again.");
+
+      // Restore button
+      const getDirectionsBtn = document.getElementById("get-directions-btn");
+      getDirectionsBtn.innerHTML = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"></path><path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z"></path></svg>Get Directions';
+      getDirectionsBtn.disabled = false;
+    }
+  }
+
+  async calculateHereRoute(fromInput, toInput, getDirectionsBtn, originalText) {
+    try {
+      // Clear existing route
+      this.routeGroup.removeAll();
+
+      // Geocode addresses using HERE Geocoding API
+      const fromCoords = await this.hereGeocode(fromInput);
+      const toCoords = await this.hereGeocode(toInput);
+
+      if (!fromCoords || !toCoords) {
+        alert("Could not find one or both locations. Please check your addresses.");
+        getDirectionsBtn.innerHTML = originalText;
+        getDirectionsBtn.disabled = false;
+        return;
+      }
+
+      // Calculate route with HERE Routing API (includes traffic)
+      const routeParams = {
+        mode: 'fastest;car;traffic:enabled',
+        representation: 'display',
+        waypoint0: `${fromCoords.lat},${fromCoords.lng}`,
+        waypoint1: `${toCoords.lat},${toCoords.lng}`,
+        routeattributes: 'waypoints,summary,shape,legs',
+        maneuverattributes: 'direction,action',
+        instructionformat: 'text'
+      };
+
+      this.routingService.calculateRoute(routeParams, (result) => {
+        if (result.response && result.response.route && result.response.route[0]) {
+          const route = result.response.route[0];
+
+          // Create route polyline
+          const routeShape = route.shape;
+          const lineString = new H.geo.LineString();
+
+          routeShape.forEach(point => {
+            const coords = point.split(',');
+            lineString.pushPoint(parseFloat(coords[0]), parseFloat(coords[1]));
+          });
+
+          const routePolyline = new H.map.Polyline(lineString, {
+            style: { strokeColor: '#06b6d4', lineWidth: 6 }
+          });
+
+          // Add start and end markers
+          const startMarker = new H.map.Marker(fromCoords, {
+            icon: new H.map.Icon('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="12" fill="%234CAF50" stroke="white" stroke-width="3"/><text x="16" y="20" text-anchor="middle" fill="white" font-size="14" font-weight="bold">A</text></svg>', 32, 32)
+          });
+
+          const endMarker = new H.map.Marker(toCoords, {
+            icon: new H.map.Icon('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="12" fill="%23F44336" stroke="white" stroke-width="3"/><text x="16" y="20" text-anchor="middle" fill="white" font-size="14" font-weight="bold">B</text></svg>', 32, 32)
+          });
+
+          // Add to route group
+          this.routeGroup.addObjects([routePolyline, startMarker, endMarker]);
+
+          // Fit map to route
+          this.hereMap.getViewPort().setViewBounds(routePolyline.getBoundingBox());
+
+          // Extract route information
+          const summary = route.summary;
+          const distance = (summary.distance / 1000).toFixed(1) + ' km';
+          const duration = Math.round(summary.trafficTime / 60) + ' min';
+
+          // Check for waterlogging warnings along route
+          const warnings = this.checkWaterloggingWarnings(routeShape);
+
+          // Update route info
+          this.updateRouteInfo(distance, duration, 'Route found');
+
+          // Show route modal with warnings
+          this.showRouteModal({
+            distance,
+            duration,
+            instructions: this.parseHereInstructions(route.leg[0].maneuver || []),
+            warnings
+          });
+
+          // Show warnings if any
+          if (warnings.length > 0) {
+            this.showWaterloggingWarnings(warnings);
+          }
+
+          document.getElementById("show-route-btn").style.display = "flex";
+          this.speakDirections(`Route calculated from ${fromInput} to ${toInput}. Distance: ${distance}, Duration: ${duration}. ${warnings.length > 0 ? `Warning: ${warnings.length} waterlogged areas detected along route.` : ''}`);
+
+        } else {
+          throw new Error('No route found');
+        }
+
+        // Restore button
+        getDirectionsBtn.innerHTML = originalText;
+        getDirectionsBtn.disabled = false;
+
+      }, (error) => {
+        console.error("HERE routing error:", error);
+        alert("Error calculating route. Please try again.");
+        getDirectionsBtn.innerHTML = originalText;
+        getDirectionsBtn.disabled = false;
+      });
+
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async calculateLeafletRoute(fromInput, toInput, getDirectionsBtn, originalText) {
+    try {
+      // Get coordinates (from autocomplete or geocoding)
+      const fromInputElement = document.getElementById("from-input");
+      const toInputElement = document.getElementById("to-input");
+
+      const fromCoords = fromInputElement.dataset.lat && fromInputElement.dataset.lon ?
+        [parseFloat(fromInputElement.dataset.lat), parseFloat(fromInputElement.dataset.lon)] :
+        await this.geocodeAddress(fromInput);
+
+      const toCoords = toInputElement.dataset.lat && toInputElement.dataset.lon ?
+        [parseFloat(toInputElement.dataset.lat), parseFloat(toInputElement.dataset.lon)] :
+        await this.geocodeAddress(toInput);
+
+      if (!fromCoords || !toCoords) {
+        alert("Could not find one or both locations. Please check your addresses.");
+        getDirectionsBtn.innerHTML = originalText;
+        getDirectionsBtn.disabled = false;
+        return;
+      }
+
+      // Clear existing route
+      this.routeLayerGroup.clearLayers();
+
+      // Add markers for start and end points
+      const startMarker = L.marker(fromCoords)
+        .bindPopup(`<strong>Start:</strong> ${fromInput}`)
+        .addTo(this.routeLayerGroup);
+
+      const endMarker = L.marker(toCoords)
+        .bindPopup(`<strong>Destination:</strong> ${toInput}`)
+        .addTo(this.routeLayerGroup);
+
+      // Get route using OpenRouteService
+      const route = await this.getRoute(fromCoords, toCoords);
+
+      if (route) {
+        // Check for waterlogging warnings along route
+        const warnings = this.checkWaterloggingWarningsLeaflet(route.coordinates);
+
+        // Draw route on map with warning-based styling
+        const routeColor = warnings.length > 0 ? '#ff6b35' : '#06b6d4';
+        const routeLine = L.polyline(route.coordinates, {
+          color: routeColor,
+          weight: 6,
+          opacity: 0.8,
+          dashArray: warnings.length > 0 ? '10,5' : null
+        }).addTo(this.routeLayerGroup);
+
+        // Add warning markers along route if any
+        if (warnings.length > 0) {
+          warnings.forEach(warning => {
+            const warningIcon = L.divIcon({
+              html: `<div style="background: ${warning.riskLevel === 'high' ? '#f44336' : '#ff9800'}; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">⚠</div>`,
+              iconSize: [24, 24],
+              className: 'warning-marker'
+            });
+
+            L.marker([warning.lat, warning.lng], { icon: warningIcon })
+              .bindPopup(`<strong>⚠️ ${warning.road}</strong><br>${warning.riskLevel === 'high' ? 'High Risk' : 'Moderate Risk'} - ${warning.rainfall.toFixed(1)}mm`)
+              .addTo(this.routeLayerGroup);
+          });
+        }
+
+        // Fit map to show entire route
+        const group = new L.featureGroup([startMarker, endMarker, routeLine]);
+        this.directionsMap.fitBounds(group.getBounds().pad(0.1));
+
+        // Update route info panel
+        this.updateRouteInfo(route.distance, route.duration, warnings.length > 0 ? `Route found (${warnings.length} warnings)` : 'Route found');
+
+        // Store route instructions with warnings
+        this.currentRoute = { ...route, warnings };
+        this.showRouteModal({ ...route, warnings });
+
+        // Show warnings if any
+        if (warnings.length > 0) {
+          this.showWaterloggingWarnings(warnings);
+        }
+
+        // Show the route details button
+        document.getElementById("show-route-btn").style.display = "flex";
+
+        // Enhanced voice directions with warnings
+        const warningText = warnings.length > 0 ? ` Warning: ${warnings.length} waterlogged area${warnings.length > 1 ? 's' : ''} detected along route.` : '';
+        this.speakDirections(`Route calculated from ${fromInput} to ${toInput}. Distance: ${route.distance}, Duration: ${route.duration}.${warningText}`);
+      } else {
+        // Fallback: draw straight line
+        const straightLine = L.polyline([fromCoords, toCoords], {
+          color: '#ef4444',
+          weight: 3,
+          opacity: 0.6,
+          dashArray: '10, 10'
+        }).addTo(this.routeLayerGroup);
+
+        const group = new L.featureGroup([startMarker, endMarker, straightLine]);
+        this.directionsMap.fitBounds(group.getBounds().pad(0.1));
+
+        // Calculate approximate distance for straight line
+        const distance = this.calculateDistance(fromCoords, toCoords);
+        this.updateRouteInfo(distance.toFixed(1) + ' km', 'Estimated', 'Direct path');
+
+        this.speakDirections(`Showing direct path from ${fromInput} to ${toInput}. Detailed routing unavailable.`);
+      }
+
+      // Restore button
+      getDirectionsBtn.innerHTML = originalText;
+      getDirectionsBtn.disabled = false;
+
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async geocodeAddress(address) {
+    try {
+      // Add delay to respect rate limits
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&addressdetails=1`, {
+        headers: {
+          'User-Agent': 'MaveriqAir/1.0'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data && data.length > 0) {
+        return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+      }
+      return null;
+    } catch (error) {
+      console.error("Geocoding error:", error);
+      return null;
+    }
+  }
+
+  async getRoute(fromCoords, toCoords) {
+    try {
+      // Try multiple routing services for better reliability
+
+      // Method 1: Try OSRM (Open Source Routing Machine)
+      try {
+        const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${fromCoords[1]},${fromCoords[0]};${toCoords[1]},${toCoords[0]}?overview=full&geometries=geojson`;
+
+        const osrmResponse = await fetch(osrmUrl);
+
+        if (osrmResponse.ok) {
+          const osrmData = await osrmResponse.json();
+
+          if (osrmData.routes && osrmData.routes[0]) {
+            const route = osrmData.routes[0];
+            const coordinates = route.geometry.coordinates.map(coord => [coord[1], coord[0]]); // Swap lon,lat to lat,lon
+            const distance = (route.distance / 1000).toFixed(1) + ' km';
+            const duration = Math.round(route.duration / 60) + ' min';
+
+            // Get detailed instructions
+            const instructions = this.parseOSRMInstructions(route.legs[0].steps || []);
+
+            return {
+              coordinates,
+              distance,
+              duration,
+              instructions
+            };
+          }
+        }
+      } catch (osrmError) {
+        console.log("OSRM failed, trying alternative:", osrmError);
+      }
+
+      // Method 2: Try GraphHopper (if OSRM fails)
+      try {
+        const graphHopperUrl = `https://graphhopper.com/api/1/route?point=${fromCoords[0]},${fromCoords[1]}&point=${toCoords[0]},${toCoords[1]}&vehicle=car&locale=en&calc_points=true&type=json`;
+
+        const ghResponse = await fetch(graphHopperUrl);
+
+        if (ghResponse.ok) {
+          const ghData = await ghResponse.json();
+
+          if (ghData.paths && ghData.paths[0]) {
+            const path = ghData.paths[0];
+            // Decode the polyline points
+            const coordinates = this.decodePolyline(path.points);
+            const distance = (path.distance / 1000).toFixed(1) + ' km';
+            const duration = Math.round(path.time / 60000) + ' min';
+
+            return {
+              coordinates,
+              distance,
+              duration
+            };
+          }
+        }
+      } catch (ghError) {
+        console.log("GraphHopper failed:", ghError);
+      }
+
+      return null;
+    } catch (error) {
+      console.error("All routing services failed:", error);
+      return null;
+    }
+  }
+
+  // Simple polyline decoder for GraphHopper
+  decodePolyline(encoded) {
+    const points = [];
+    let index = 0;
+    const len = encoded.length;
+    let lat = 0;
+    let lng = 0;
+
+    while (index < len) {
+      let b;
+      let shift = 0;
+      let result = 0;
+      do {
+        b = encoded.charCodeAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      const dlat = ((result & 1) !== 0 ? ~(result >> 1) : (result >> 1));
+      lat += dlat;
+
+      shift = 0;
+      result = 0;
+      do {
+        b = encoded.charCodeAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      const dlng = ((result & 1) !== 0 ? ~(result >> 1) : (result >> 1));
+      lng += dlng;
+
+      points.push([lat / 1e5, lng / 1e5]);
+    }
+
+    return points;
+  }
+
+  useCurrentLocation() {
+    if (navigator.geolocation) {
+      const useCurrentBtn = document.getElementById("use-current-location-btn");
+      const originalText = useCurrentBtn.innerHTML;
+      useCurrentBtn.innerHTML = '<div style="display: flex; align-items: center; gap: 0.5rem;"><div style="width: 1rem; height: 1rem; border: 2px solid #fff; border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>Getting location...</div>';
+      useCurrentBtn.disabled = true;
+
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+
+        try {
+          // Add delay to respect rate limits
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
+          // Reverse geocoding to get address
+          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`, {
+            headers: {
+              'User-Agent': 'MaveriqAir/1.0'
+            }
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const data = await response.json();
+
+          if (data && data.display_name) {
+            document.getElementById("from-input").value = data.display_name;
+            this.speakDirections("Current location set as starting point");
+          } else {
+            document.getElementById("from-input").value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+            this.speakDirections("Using coordinates as starting point");
+          }
+        } catch (error) {
+          console.error("Reverse geocoding error:", error);
+          document.getElementById("from-input").value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+          this.speakDirections("Using coordinates as starting point");
+        }
+
+        // Restore button
+        useCurrentBtn.innerHTML = originalText;
+        useCurrentBtn.disabled = false;
+      }, (error) => {
+        console.error("Geolocation error:", error);
+        alert("Unable to get your current location. Please check your browser permissions.");
+
+        // Restore button
+        useCurrentBtn.innerHTML = originalText;
+        useCurrentBtn.disabled = false;
+      });
+    } else {
+      alert("Geolocation is not supported by this browser.");
+    }
+  }
+
+  toggleFullscreen() {
+    const mapContainer = document.querySelector(".directions-map-container");
+
+    if (!document.fullscreenElement) {
+      mapContainer.requestFullscreen().then(() => {
+        mapContainer.style.position = "fixed";
+        mapContainer.style.top = "0";
+        mapContainer.style.left = "0";
+        mapContainer.style.width = "100vw";
+        mapContainer.style.height = "100vh";
+        mapContainer.style.zIndex = "9999";
+
+        // Trigger map resize
+        setTimeout(() => {
+          this.directionsMap.invalidateSize();
+        }, 100);
+      });
+    } else {
+      document.exitFullscreen().then(() => {
+        mapContainer.style.position = "relative";
+        mapContainer.style.top = "auto";
+        mapContainer.style.left = "auto";
+        mapContainer.style.width = "100%";
+        mapContainer.style.height = "500px";
+        mapContainer.style.zIndex = "auto";
+
+        // Trigger map resize
+        setTimeout(() => {
+          this.directionsMap.invalidateSize();
+        }, 100);
+      });
+    }
+  }
+
+  setupVoiceAssistant() {
+    const voiceBtn = document.getElementById("voice-assistant-btn");
+    const voiceStatus = document.getElementById("voice-status");
+    const voiceText = document.getElementById("voice-text");
+
+    let isListening = false;
+    let recognition = null;
+
+    // Check for speech recognition support
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRecognition();
+
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
+
+      recognition.onstart = () => {
+        isListening = true;
+        voiceBtn.classList.add('active');
+        voiceStatus.classList.add('active');
+        voiceText.textContent = 'Listening... Say "from [location] to [destination]"';
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript.toLowerCase();
+        voiceText.textContent = `You said: "${transcript}"`;
+
+        // Process voice command
+        this.processVoiceCommand(transcript);
+
+        setTimeout(() => {
+          voiceStatus.classList.remove('active');
+        }, 3000);
+      };
+
+      recognition.onerror = (event) => {
+        voiceText.textContent = 'Error occurred in recognition: ' + event.error;
+        isListening = false;
+        voiceBtn.classList.remove('active');
+
+        setTimeout(() => {
+          voiceStatus.classList.remove('active');
+        }, 3000);
+      };
+
+      recognition.onend = () => {
+        isListening = false;
+        voiceBtn.classList.remove('active');
+      };
+    }
+
+    voiceBtn.addEventListener("click", () => {
+      if (!recognition) {
+        alert("Speech recognition is not supported in your browser.");
+        return;
+      }
+
+      if (isListening) {
+        recognition.stop();
+      } else {
+        recognition.start();
+      }
+    });
+  }
+
+  processVoiceCommand(transcript) {
+    // Parse voice commands like "from Delhi to Mumbai" or "navigate to Mumbai"
+    const fromMatch = transcript.match(/from\s+(.+?)\s+to\s+(.+)/);
+    const toMatch = transcript.match(/(?:navigate to|go to|directions to)\s+(.+)/);
+
+    if (fromMatch) {
+      document.getElementById("from-input").value = fromMatch[1];
+      document.getElementById("to-input").value = fromMatch[2];
+      this.speakDirections(`Setting route from ${fromMatch[1]} to ${fromMatch[2]}`);
+      setTimeout(() => this.calculateAndDisplayRoute(), 1000);
+    } else if (toMatch) {
+      document.getElementById("to-input").value = toMatch[1];
+      this.speakDirections(`Setting destination to ${toMatch[1]}`);
+    } else {
+      this.speakDirections("I didn't understand. Please say 'from [location] to [destination]' or 'navigate to [destination]'");
+    }
+  }
+
+  speakDirections(text) {
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.8;
+      utterance.pitch = 1;
+      utterance.volume = 0.8;
+      speechSynthesis.speak(utterance);
+    }
+  }
+
+  updateRouteInfo(distance, duration, status) {
+    const routeInfo = document.getElementById('route-info');
+    const routeDistance = document.getElementById('route-distance');
+    const routeDuration = document.getElementById('route-duration');
+    const routeStatus = document.getElementById('route-status');
+
+    routeDistance.textContent = distance;
+    routeDuration.textContent = duration;
+    routeStatus.textContent = status;
+
+    routeInfo.style.display = 'block';
+  }
+
+  calculateDistance(coord1, coord2) {
+    const R = 6371; // Radius of the Earth in kilometers
+    const dLat = this.deg2rad(coord2[0] - coord1[0]);
+    const dLon = this.deg2rad(coord2[1] - coord1[1]);
+    const a =
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(this.deg2rad(coord1[0])) * Math.cos(this.deg2rad(coord2[0])) *
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const d = R * c; // Distance in kilometers
+    return d;
+  }
+
+  deg2rad(deg) {
+    return deg * (Math.PI/180);
+  }
+
+
+
+  // Load waterlogging data for Google Maps with custom sign markers
+  async loadWaterloggingDataGoogle() {
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+    this.waterlogData = []; // Store for route warnings
+    this.waterlogMarkers = []; // Store markers for management
+
+    console.log('Loading waterlogging data with custom sign markers...');
+
+    for (const road of this.waterloggedRoads) {
+      try {
+        await new Promise(resolve => setTimeout(resolve, 50));
+
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${road.lat}&longitude=${road.lon}&daily=precipitation_sum&timezone=Asia/Kolkata`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        let todayIndex = -1;
+        if (data.daily && data.daily.time) {
+          todayIndex = data.daily.time.findIndex(date => date === today);
+        }
+
+        const rainMM = (todayIndex >= 0 && data.daily.precipitation_sum[todayIndex])
+          ? data.daily.precipitation_sum[todayIndex]
+          : (data.daily.precipitation_sum[0] || 0);
+
+        const limit = this.waterlogThresholds[road.drainage];
+        const riskPercentage = Math.min(Math.round((rainMM / limit) * 100), 100);
+
+        let status, riskLevel, markerSize;
+
+        if (rainMM > limit) {
+          status = 'High Risk';
+          riskLevel = 'high';
+          markerSize = 40; // Larger marker for high risk
+        } else if (rainMM > 0.75 * limit) {
+          status = 'Moderate Risk';
+          riskLevel = 'moderate';
+          markerSize = 32; // Medium marker for moderate risk
+        } else {
+          status = 'Safe';
+          riskLevel = 'safe';
+          markerSize = 24; // Smaller marker for safe areas
+        }
+
+        // Only show markers for moderate and high risk areas
+        if (riskLevel === 'high' || riskLevel === 'moderate') {
+          // Create custom marker using the sign image
+          const marker = new google.maps.Marker({
+            position: { lat: road.lat, lng: road.lon },
+            map: this.googleMap,
+            title: `${road.name} - ${status}`,
+            icon: {
+              url: './sign.jpeg',
+              scaledSize: new google.maps.Size(markerSize, markerSize),
+              anchor: new google.maps.Point(markerSize/2, markerSize/2)
+            },
+            zIndex: riskLevel === 'high' ? 1000 : 900
+          });
+
+          // Create info window content
+          const drainageInfo = {
+            'weak': 'Poor (20mm threshold)',
+            'moderate': 'Moderate (40mm threshold)',
+            'best': 'Excellent (80mm threshold)'
+          };
+
+          const statusColor = riskLevel === 'high' ? '#dc2626' : '#ea580c';
+
+          const infoContent = `
+            <div style="padding: 15px; min-width: 280px; font-family: 'Segoe UI', sans-serif; background: white; border-radius: 8px;">
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                <img src="./sign.jpeg" style="width: 32px; height: 32px; border-radius: 4px;">
+                <h3 style="margin: 0; color: ${statusColor}; font-size: 16px; font-weight: 600;">
+                  🛣️ ${road.name}
+                </h3>
+              </div>
+              <div style="display: grid; gap: 10px; background: #f8fafc; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span style="color: #64748b; font-weight: 500; display: flex; align-items: center; gap: 5px;">
+                    💧 Today's Rainfall:
+                  </span>
+                  <span style="color: ${statusColor}; font-weight: 700; font-size: 14px;">${rainMM.toFixed(1)} mm</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span style="color: #64748b; font-weight: 500; display: flex; align-items: center; gap: 5px;">
+                    🚰 Drainage:
+                  </span>
+                  <span style="color: #334155; font-weight: 600;">${drainageInfo[road.drainage]}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span style="color: #64748b; font-weight: 500; display: flex; align-items: center; gap: 5px;">
+                    📈 Risk Level:
+                  </span>
+                  <span style="color: ${statusColor}; font-weight: 700;">${riskPercentage}%</span>
+                </div>
+              </div>
+              <div style="padding: 10px; background: ${riskLevel === 'high' ? '#fef2f2' : '#fff7ed'}; border: 2px solid ${statusColor}; border-radius: 6px; text-align: center;">
+                <div style="color: ${statusColor}; font-weight: 700; font-size: 14px; margin-bottom: 4px;">
+                  ${riskLevel === 'high' ? '🚨 HIGH WATERLOGGING RISK' : '⚠️ MODERATE WATERLOGGING RISK'}
+                </div>
+                <div style="color: #64748b; font-size: 12px; font-weight: 500;">
+                  ${riskLevel === 'high' ? 'Avoid this area during heavy rain' : 'Exercise caution in this area'}
+                </div>
+              </div>
+            </div>
+          `;
+
+          const infoWindow = new google.maps.InfoWindow({
+            content: infoContent,
+            maxWidth: 320
+          });
+
+          marker.addListener('click', () => {
+            // Close any open info windows
+            this.waterlogMarkers.forEach(m => {
+              if (m.infoWindow) {
+                m.infoWindow.close();
+              }
+            });
+
+            infoWindow.open(this.googleMap, marker);
+          });
+
+          // Store info window reference
+          marker.infoWindow = infoWindow;
+          this.waterlogMarkers.push(marker);
+        }
+
+        // Store for route warnings (all roads, not just risky ones)
+        this.waterlogData.push({
+          road,
+          riskLevel,
+          rainMM,
+          status,
+          lat: road.lat,
+          lng: road.lon
+        });
+
+      } catch (error) {
+        console.error(`Failed to load data for ${road.name}:`, error);
+      }
+    }
+
+    console.log(`Loaded waterlogging data for ${this.waterlogData.length} roads with ${this.waterlogMarkers.length} warning markers`);
+  }
+
+
+
+  // Add waterlogging legend to the map
+  addWaterloggingLegend() {
+    const legendDiv = document.createElement('div');
+    legendDiv.className = 'waterlog-legend';
+    legendDiv.innerHTML = `
+      <h4>⚠️ Waterlogging Warnings</h4>
+      <div class="legend-item">
+        <img src="./sign.jpeg" style="width: 20px; height: 20px; border-radius: 3px;">
+        <span style="color: #dc2626; font-weight: 600;">High Risk Areas</span>
+      </div>
+      <div class="legend-item">
+        <img src="./sign.jpeg" style="width: 16px; height: 16px; border-radius: 3px;">
+        <span style="color: #ea580c; font-weight: 600;">Moderate Risk Areas</span>
+      </div>
+      <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(6, 182, 212, 0.3);">
+        <div style="font-size: 0.7rem; color: #9ca3af; text-align: center; margin-bottom: 0.5rem;">
+          Traffic: Google Maps
+        </div>
+        <div style="font-size: 0.65rem; color: #6b7280; text-align: center; line-height: 1.3;">
+          Only risky areas shown<br>
+          Safe areas have no markers
+        </div>
+      </div>
+    `;
+
+    // Add legend to map
+    this.googleMap.controls[google.maps.ControlPosition.LEFT_TOP].push(legendDiv);
+  }
+
+  // Load waterlogging data and display on map
+  async loadWaterloggingData() {
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+
+    for (const road of this.waterloggedRoads) {
+      try {
+        // Add small delay to respect API limits
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${road.lat}&longitude=${road.lon}&daily=precipitation_sum&timezone=Asia/Kolkata`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        // Find today's rainfall
+        let todayIndex = -1;
+        if (data.daily && data.daily.time) {
+          todayIndex = data.daily.time.findIndex(date => date === today);
+        }
+
+        const rainMM = (todayIndex >= 0 && data.daily.precipitation_sum[todayIndex])
+          ? data.daily.precipitation_sum[todayIndex]
+          : (data.daily.precipitation_sum[0] || 0);
+
+        const limit = this.waterlogThresholds[road.drainage];
+
+        // Determine risk level
+        let riskLevel = 'safe';
+        let color = '#4CAF50'; // Green
+        let status = 'Safe';
+
+        if (rainMM > limit) {
+          riskLevel = 'high';
+          color = '#F44336'; // Red
+          status = 'High Risk';
+        } else if (rainMM > 0.75 * limit) {
+          riskLevel = 'moderate';
+          color = '#FF9800'; // Orange
+          status = 'Moderate Risk';
+        }
+
+        // Create waterlogging marker
+        const marker = new H.map.Circle(
+          { lat: road.lat, lng: road.lon },
+          150,
+          {
+            style: {
+              strokeColor: color,
+              fillColor: color,
+              lineWidth: 2,
+              fillOpacity: 0.6
+            }
+          }
+        );
+
+        // Add info bubble
+        const bubbleContent = `
+          <div style="padding: 10px; min-width: 200px;">
+            <h4 style="margin: 0 0 8px 0; color: ${color};">${road.name}</h4>
+            <div><strong>Today's Rainfall:</strong> ${rainMM.toFixed(1)} mm</div>
+            <div><strong>Drainage:</strong> ${road.drainage}</div>
+            <div><strong>Status:</strong> <span style="color: ${color}; font-weight: bold;">${status}</span></div>
+            <div style="margin-top: 8px; font-size: 12px; color: #666;">
+              Threshold: ${limit}mm | Risk: ${Math.min(Math.round((rainMM / limit) * 100), 100)}%
+            </div>
+          </div>
+        `;
+
+        marker.setData({ content: bubbleContent, riskLevel, rainMM, road });
+
+        marker.addEventListener('tap', (evt) => {
+          const bubble = new H.ui.InfoBubble(evt.target.getCenter(), {
+            content: evt.target.getData().content
+          });
+          this.ui.addBubble(bubble);
+        });
+
+        this.waterlogGroup.addObject(marker);
+
+      } catch (error) {
+        console.error(`Failed to load data for ${road.name}:`, error);
+      }
+    }
+  }
+
+  // HERE Maps geocoding
+  async hereGeocode(address) {
+    return new Promise((resolve) => {
+      this.geocodingService.geocode({
+        searchText: address + ', Kolkata, India'
+      }, (result) => {
+        if (result.Response && result.Response.View && result.Response.View[0] &&
+            result.Response.View[0].Result && result.Response.View[0].Result[0]) {
+          const location = result.Response.View[0].Result[0].Location.DisplayPosition;
+          resolve({ lat: location.Latitude, lng: location.Longitude });
+        } else {
+          resolve(null);
+        }
+      }, (error) => {
+        console.error('Geocoding error:', error);
+        resolve(null);
+      });
+    });
+  }
+
+  // Check for waterlogging warnings along route (Leaflet version)
+  checkWaterloggingWarningsLeaflet(routeCoordinates) {
+    const warnings = [];
+    const warningDistance = 0.005; // ~500m radius
+
+    // Get all waterlog markers from the layer group
+    const waterlogMarkers = [];
+    this.waterlogLayerGroup.eachLayer(layer => {
+      if (layer.roadData) {
+        waterlogMarkers.push(layer);
+      }
+    });
+
+    for (const marker of waterlogMarkers) {
+      const roadData = marker.roadData;
+
+      // Only check moderate and high risk roads
+      if (roadData.riskLevel === 'high' || roadData.riskLevel === 'moderate') {
+        // Check if any route point is near this waterlogged road
+        for (const routePoint of routeCoordinates) {
+          const routeLat = routePoint[0];
+          const routeLng = routePoint[1];
+
+          const distance = Math.sqrt(
+            Math.pow(routeLat - roadData.road.lat, 2) + Math.pow(routeLng - roadData.road.lon, 2)
+          );
+
+          if (distance < warningDistance) {
+            warnings.push({
+              road: roadData.road.name,
+              riskLevel: roadData.riskLevel,
+              rainfall: roadData.rainMM,
+              lat: roadData.road.lat,
+              lng: roadData.road.lon
+            });
+            break; // Found this road, no need to check more points
+          }
+        }
+      }
+    }
+
+    return warnings;
+  }
+
+  // Check for waterlogging warnings along route (HERE Maps version - kept for compatibility)
+  checkWaterloggingWarnings(routeShape) {
+    const warnings = [];
+    const warningDistance = 0.005; // ~500m radius
+
+    for (const road of this.waterloggedRoads) {
+      // Check if any route point is near a waterlogged road
+      for (const point of routeShape) {
+        const coords = point.split(',');
+        const routeLat = parseFloat(coords[0]);
+        const routeLng = parseFloat(coords[1]);
+
+        const distance = Math.sqrt(
+          Math.pow(routeLat - road.lat, 2) + Math.pow(routeLng - road.lon, 2)
+        );
+
+        if (distance < warningDistance) {
+          // Get the road's current risk level from waterlog group
+          if (this.waterlogGroup) {
+            const roadMarkers = this.waterlogGroup.getObjects();
+            for (const marker of roadMarkers) {
+              const markerData = marker.getData();
+              if (markerData && markerData.road && markerData.road.name === road.name) {
+                if (markerData.riskLevel === 'high' || markerData.riskLevel === 'moderate') {
+                  warnings.push({
+                    road: road.name,
+                    riskLevel: markerData.riskLevel,
+                    rainfall: markerData.rainMM,
+                    lat: road.lat,
+                    lng: road.lon
+                  });
+                }
+                break;
+              }
+            }
+          }
+          break; // Found this road, no need to check more points
+        }
+      }
+    }
+
+    return warnings;
+  }
+
+  // Show waterlogging warnings
+  showWaterloggingWarnings(warnings) {
+    const warningHtml = warnings.map(warning =>
+      `<div style="margin: 5px 0; padding: 8px; background: ${warning.riskLevel === 'high' ? '#ffebee' : '#fff3e0'}; border-left: 4px solid ${warning.riskLevel === 'high' ? '#f44336' : '#ff9800'}; border-radius: 4px;">
+        <strong>${warning.road}</strong><br>
+        <span style="color: ${warning.riskLevel === 'high' ? '#f44336' : '#ff9800'};">
+          ${warning.riskLevel === 'high' ? '⚠️ High Risk' : '⚠️ Moderate Risk'} - ${warning.rainfall.toFixed(1)}mm rainfall
+        </span>
+      </div>`
+    ).join('');
+
+    const warningModal = `
+      <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center;" onclick="this.remove()">
+        <div style="background: white; padding: 20px; border-radius: 8px; max-width: 400px; max-height: 80vh; overflow-y: auto;" onclick="event.stopPropagation()">
+          <h3 style="margin: 0 0 15px 0; color: #f44336;">⚠️ Waterlogging Warnings</h3>
+          <p style="margin: 0 0 15px 0; color: #666;">Your route passes through areas with waterlogging risk:</p>
+          ${warningHtml}
+          <button onclick="this.closest('[style*=\"position: fixed\"]').remove()" style="margin-top: 15px; padding: 8px 16px; background: #06b6d4; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            Continue with Route
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', warningModal);
+  }
+
+  // Parse HERE instructions
+  parseHereInstructions(maneuvers) {
+    return maneuvers.map((maneuver, index) => ({
+      step: index + 1,
+      direction: maneuver.instruction || 'Continue',
+      instruction: maneuver.instruction || 'Continue straight',
+      distance: maneuver.length ? (maneuver.length / 1000).toFixed(1) + ' km' : '',
+      duration: maneuver.time ? Math.round(maneuver.time / 60) + ' min' : '',
+      icon: this.getManeuverIcon(maneuver.action),
+      coordinates: maneuver.position ? [maneuver.position.latitude, maneuver.position.longitude] : null
+    }));
+  }
+
+  // Get maneuver icon
+  getManeuverIcon(action) {
+    const icons = {
+      'depart': '🚗',
+      'arrive': '🏁',
+      'turn': '↻',
+      'bear': '↗',
+      'continue': '→',
+      'enter': '⤴',
+      'exit': '↘',
+      'ferry': '⛴',
+      'roundabout': '⭕'
+    };
+    return icons[action] || '→';
+  }
+
+  // Google geocoding function
+  async googleGeocode(address) {
+    return new Promise((resolve) => {
+      const geocoder = new google.maps.Geocoder();
+      geocoder.geocode({
+        address: address + ', Kolkata, India',
+        componentRestrictions: { country: 'IN' }
+      }, (results, status) => {
+        if (status === 'OK' && results[0]) {
+          const location = results[0].geometry.location;
+          resolve({
+            lat: location.lat(),
+            lng: location.lng()
+          });
+        } else {
+          console.error('Geocoding failed:', status);
+          resolve(null);
+        }
+      });
+    });
+  }
+
+  // Parse Google Maps instructions
+  parseGoogleInstructions(steps) {
+    return steps.map((step, index) => ({
+      step: index + 1,
+      direction: step.instructions.replace(/<[^>]*>/g, ''), // Remove HTML tags
+      instruction: step.instructions.replace(/<[^>]*>/g, ''),
+      distance: step.distance.text,
+      duration: step.duration.text,
+      icon: this.getGoogleManeuverIcon(step.maneuver),
+      coordinates: {
+        lat: step.start_location.lat(),
+        lng: step.start_location.lng()
+      }
+    }));
+  }
+
+  // Get maneuver icon for Google Maps
+  getGoogleManeuverIcon(maneuver) {
+    const icons = {
+      'turn-left': '↰',
+      'turn-right': '↱',
+      'turn-slight-left': '↖',
+      'turn-slight-right': '↗',
+      'turn-sharp-left': '↺',
+      'turn-sharp-right': '↻',
+      'straight': '→',
+      'ramp-left': '⤴',
+      'ramp-right': '⤵',
+      'merge': '⤴',
+      'fork-left': '⑂',
+      'fork-right': '⑂',
+      'ferry': '⛴',
+      'roundabout-left': '⭕',
+      'roundabout-right': '⭕'
+    };
+    return icons[maneuver] || '→';
+  }
+
+  // Check waterlogging warnings for Google Maps route
+  checkWaterloggingWarningsGoogle(routePath) {
+    const warnings = [];
+    const warningDistance = 0.005; // ~500m radius
+
+    if (!this.waterlogData) return warnings;
+
+    for (const waterlogItem of this.waterlogData) {
+      if (waterlogItem.riskLevel === 'high' || waterlogItem.riskLevel === 'moderate') {
+        // Check if any route point is near this waterlogged road
+        for (const routePoint of routePath) {
+          const routeLat = routePoint.lat();
+          const routeLng = routePoint.lng();
+
+          const distance = Math.sqrt(
+            Math.pow(routeLat - waterlogItem.lat, 2) + Math.pow(routeLng - waterlogItem.lng, 2)
+          );
+
+          if (distance < warningDistance) {
+            warnings.push({
+              road: waterlogItem.road.name,
+              riskLevel: waterlogItem.riskLevel,
+              rainfall: waterlogItem.rainMM,
+              lat: waterlogItem.lat,
+              lng: waterlogItem.lng
+            });
+            break; // Found this road, no need to check more points
+          }
+        }
+      }
+    }
+
+    return warnings;
+  }
+
+
+
+  setupAutocomplete() {
+    const fromInput = document.getElementById('from-input');
+    const toInput = document.getElementById('to-input');
+    const fromDropdown = document.getElementById('from-dropdown');
+    const toDropdown = document.getElementById('to-dropdown');
+
+    let fromTimeout, toTimeout;
+
+    // Setup autocomplete for "from" input
+    fromInput.addEventListener('input', (e) => {
+      clearTimeout(fromTimeout);
+      const query = e.target.value.trim();
+
+      if (query.length < 2) {
+        fromDropdown.style.display = 'none';
+        return;
+      }
+
+      fromTimeout = setTimeout(() => {
+        this.searchPlaces(query, fromDropdown, fromInput);
+      }, 300);
+    });
+
+    // Setup autocomplete for "to" input
+    toInput.addEventListener('input', (e) => {
+      clearTimeout(toTimeout);
+      const query = e.target.value.trim();
+
+      if (query.length < 2) {
+        toDropdown.style.display = 'none';
+        return;
+      }
+
+      toTimeout = setTimeout(() => {
+        this.searchPlaces(query, toDropdown, toInput);
+      }, 300);
+    });
+
+    // Hide dropdowns when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!fromInput.contains(e.target) && !fromDropdown.contains(e.target)) {
+        fromDropdown.style.display = 'none';
+      }
+      if (!toInput.contains(e.target) && !toDropdown.contains(e.target)) {
+        toDropdown.style.display = 'none';
+      }
+    });
+
+    // Handle keyboard navigation
+    this.setupKeyboardNavigation(fromInput, fromDropdown);
+    this.setupKeyboardNavigation(toInput, toDropdown);
+  }
+
+  async searchPlaces(query, dropdown, input) {
+    try {
+      // Add delay to respect rate limits
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`, {
+        headers: {
+          'User-Agent': 'MaveriqAir/1.0'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const places = await response.json();
+      this.displayPlaceSuggestions(places, dropdown, input);
+    } catch (error) {
+      console.error('Place search error:', error);
+      dropdown.style.display = 'none';
+    }
+  }
+
+  displayPlaceSuggestions(places, dropdown, input) {
+    dropdown.innerHTML = '';
+
+    if (places.length === 0) {
+      dropdown.style.display = 'none';
+      return;
+    }
+
+    places.forEach((place, index) => {
+      const item = document.createElement('div');
+      item.className = 'autocomplete-item';
+      item.dataset.index = index;
+
+      const placeName = place.display_name.split(',')[0];
+      const placeDetails = place.display_name.split(',').slice(1, 3).join(',');
+
+      item.innerHTML = `
+        <div class="place-name">${placeName}</div>
+        <div class="place-details">${placeDetails}</div>
+      `;
+
+      item.addEventListener('click', () => {
+        input.value = place.display_name;
+        dropdown.style.display = 'none';
+        input.dataset.lat = place.lat;
+        input.dataset.lon = place.lon;
+      });
+
+      dropdown.appendChild(item);
+    });
+
+    dropdown.style.display = 'block';
+  }
+
+  setupKeyboardNavigation(input, dropdown) {
+    let selectedIndex = -1;
+
+    input.addEventListener('keydown', (e) => {
+      const items = dropdown.querySelectorAll('.autocomplete-item');
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+        this.updateSelection(items, selectedIndex);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedIndex = Math.max(selectedIndex - 1, -1);
+        this.updateSelection(items, selectedIndex);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (selectedIndex >= 0 && items[selectedIndex]) {
+          items[selectedIndex].click();
+        }
+      } else if (e.key === 'Escape') {
+        dropdown.style.display = 'none';
+        selectedIndex = -1;
+      }
+    });
+  }
+
+  updateSelection(items, selectedIndex) {
+    items.forEach((item, index) => {
+      item.classList.toggle('selected', index === selectedIndex);
+    });
+  }
+
+  parseOSRMInstructions(steps) {
+    const instructions = [];
+    const maneuverTypes = {
+      'turn': '↻',
+      'new name': '→',
+      'depart': '🚗',
+      'arrive': '🏁',
+      'merge': '⤴',
+      'on ramp': '↗',
+      'off ramp': '↘',
+      'fork': '⑂',
+      'end of road': '⤴',
+      'continue': '→',
+      'roundabout': '⭕',
+      'rotary': '⭕',
+      'roundabout turn': '⭕',
+      'notification': 'ℹ',
+      'exit roundabout': '↗'
+    };
+
+    steps.forEach((step, index) => {
+      const maneuver = step.maneuver;
+      const instruction = step.name || 'Continue';
+      const distance = step.distance ? (step.distance / 1000).toFixed(1) + ' km' : '';
+      const duration = step.duration ? Math.round(step.duration / 60) + ' min' : '';
+
+      let direction = 'Continue';
+      let icon = '→';
+
+      if (maneuver) {
+        const type = maneuver.type;
+        const modifier = maneuver.modifier;
+
+        icon = maneuverTypes[type] || '→';
+
+        if (type === 'turn') {
+          if (modifier === 'left') {
+            direction = 'Turn left';
+            icon = '←';
+          } else if (modifier === 'right') {
+            direction = 'Turn right';
+            icon = '→';
+          } else if (modifier === 'sharp left') {
+            direction = 'Sharp left';
+            icon = '↙';
+          } else if (modifier === 'sharp right') {
+            direction = 'Sharp right';
+            icon = '↘';
+          } else if (modifier === 'slight left') {
+            direction = 'Slight left';
+            icon = '↖';
+          } else if (modifier === 'slight right') {
+            direction = 'Slight right';
+            icon = '↗';
+          }
+        } else if (type === 'depart') {
+          direction = 'Start your journey';
+          icon = '🚗';
+        } else if (type === 'arrive') {
+          direction = 'You have arrived';
+          icon = '🏁';
+        } else if (type === 'roundabout') {
+          direction = `Take the ${maneuver.exit || ''}${this.getOrdinal(maneuver.exit || 1)} exit`;
+          icon = '⭕';
+        }
+      }
+
+      instructions.push({
+        step: index + 1,
+        direction,
+        instruction,
+        distance,
+        duration,
+        icon,
+        coordinates: maneuver ? [maneuver.location[1], maneuver.location[0]] : null
+      });
+    });
+
+    return instructions;
+  }
+
+  getOrdinal(num) {
+    const suffixes = ['th', 'st', 'nd', 'rd'];
+    const v = num % 100;
+    return num + (suffixes[(v - 20) % 10] || suffixes[v] || suffixes[0]);
+  }
+
+  showRouteModal(route) {
+    const modal = document.getElementById('map-modal-overlay');
+    const modalDistance = document.getElementById('modal-distance');
+    const modalDuration = document.getElementById('modal-duration');
+    const modalInstructionsList = document.getElementById('modal-instructions-list');
+
+    // Update modal content
+    modalDistance.textContent = route.distance;
+    modalDuration.textContent = route.duration;
+
+    // Display instructions
+    this.displayModalInstructions(route.instructions || []);
+
+    // Show modal
+    modal.classList.add('active');
+  }
+
+  hideRouteModal() {
+    const modal = document.getElementById('map-modal-overlay');
+    modal.classList.remove('active');
+  }
+
+  displayModalInstructions(instructions) {
+    const instructionsList = document.getElementById('modal-instructions-list');
+
+    instructionsList.innerHTML = '';
+
+    if (instructions.length === 0) {
+      instructionsList.innerHTML = '<div style="text-align: center; color: #9ca3af; padding: 1rem;">No detailed instructions available</div>';
+      return;
+    }
+
+    instructions.forEach((instruction, index) => {
+      const item = document.createElement('div');
+      item.className = 'instruction-item';
+      item.dataset.step = index;
+
+      item.innerHTML = `
+        <div class="instruction-step">${instruction.step}</div>
+        <div class="instruction-content">
+          <div class="instruction-direction">${instruction.icon} ${instruction.direction}</div>
+          <div class="instruction-road">${instruction.instruction}</div>
+          ${instruction.distance ? `<div class="instruction-distance">${instruction.distance}</div>` : ''}
+        </div>
+      `;
+
+      if (instruction.coordinates) {
+        item.addEventListener('click', () => {
+          this.directionsMap.setView(instruction.coordinates, 16);
+          // Optionally close modal when clicking instruction
+          // this.hideRouteModal();
+        });
+        item.style.cursor = 'pointer';
+      }
+
+      instructionsList.appendChild(item);
+    });
+  }
+
+  startNavigation() {
+    if (!this.currentRoute || !this.currentRoute.instructions) {
+      alert('Please calculate a route first');
+      return;
+    }
+
+    const startBtn = document.getElementById('modal-start-nav');
+    const currentStep = document.getElementById('modal-current-step');
+
+    if (this.navigationActive) {
+      // Stop navigation
+      this.navigationActive = false;
+      startBtn.classList.remove('active');
+      startBtn.innerHTML = `
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <polygon points="5,3 19,12 5,21 5,3"></polygon>
+        </svg>
+        Start Navigation
+      `;
+      currentStep.classList.remove('active');
+      this.speakDirections('Navigation stopped');
+    } else {
+      // Start navigation
+      this.navigationActive = true;
+      this.currentInstructionIndex = 0;
+      startBtn.classList.add('active');
+      startBtn.innerHTML = `
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <rect x="6" y="4" width="4" height="16"></rect>
+          <rect x="14" y="4" width="4" height="16"></rect>
+        </svg>
+        Stop Navigation
+      `;
+      currentStep.classList.add('active');
+
+      this.updateCurrentInstruction();
+      this.speakDirections('Navigation started');
+
+      // Simulate navigation progress (in real app, this would use GPS)
+      this.simulateNavigation();
+    }
+  }
+
+  updateCurrentInstruction() {
+    if (!this.currentRoute || !this.currentRoute.instructions || !this.navigationActive) return;
+
+    const instruction = this.currentRoute.instructions[this.currentInstructionIndex];
+    if (!instruction) return;
+
+    const modalStepIcon = document.getElementById('modal-step-icon');
+    const modalStepText = document.getElementById('modal-step-text');
+    const modalStepDetails = document.getElementById('modal-step-details');
+
+    modalStepIcon.textContent = instruction.icon;
+    modalStepText.textContent = `${instruction.direction}`;
+    modalStepDetails.textContent = `${instruction.instruction} ${instruction.distance ? '• ' + instruction.distance : ''}`;
+
+    // Highlight current instruction in modal list
+    document.querySelectorAll('#modal-instructions-list .instruction-item').forEach((item, index) => {
+      item.style.background = index === this.currentInstructionIndex ?
+        'rgba(6, 182, 212, 0.2)' : 'transparent';
+    });
+
+    // Center map on current instruction if coordinates available
+    if (instruction.coordinates) {
+      this.directionsMap.setView(instruction.coordinates, 16);
+    }
+
+    // Speak instruction if voice guidance is enabled
+    if (this.voiceGuidanceEnabled) {
+      this.speakDirections(`${instruction.direction}. ${instruction.instruction}`);
+    }
+  }
+
+  simulateNavigation() {
+    if (!this.navigationActive) return;
+
+    // Simulate moving to next instruction every 10 seconds
+    setTimeout(() => {
+      if (this.navigationActive && this.currentInstructionIndex < this.currentRoute.instructions.length - 1) {
+        this.currentInstructionIndex++;
+        this.updateCurrentInstruction();
+        this.simulateNavigation();
+      } else if (this.navigationActive) {
+        // Reached destination
+        this.speakDirections('You have arrived at your destination');
+        this.startNavigation(); // Stop navigation
+      }
+    }, 10000);
+  }
+
+  toggleVoiceGuidance() {
+    const voiceBtn = document.getElementById('modal-voice-toggle');
+
+    this.voiceGuidanceEnabled = !this.voiceGuidanceEnabled;
+    voiceBtn.classList.toggle('active', this.voiceGuidanceEnabled);
+
+    // Update button text
+    voiceBtn.innerHTML = this.voiceGuidanceEnabled ? `
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <polygon points="11,5 6,9 2,9 2,15 6,15 11,19 11,5"></polygon>
+        <path d="M19.07,4.93a10,10,0,0,1,0,14.14M15.54,8.46a5,5,0,0,1,0,7.07"></path>
+      </svg>
+      Voice ON
+    ` : `
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <polygon points="11,5 6,9 2,9 2,15 6,15 11,19 11,5"></polygon>
+        <line x1="23" y1="9" x2="17" y2="15"></line>
+        <line x1="17" y1="9" x2="23" y2="15"></line>
+      </svg>
+      Voice OFF
+    `;
+
+    this.speakDirections(this.voiceGuidanceEnabled ?
+      'Voice guidance enabled' : 'Voice guidance disabled');
+  }
+}
+
+// Global variable to store app instance
+let weatherApp;
+
+// Google Maps initialization callback
+function initGoogleMaps() {
+  console.log('Google Maps API loaded');
+  // Google Maps is now ready, but we'll initialize it when the directions tab is opened
 }
 
 // Initialize the app when DOM is loaded
 document.addEventListener("DOMContentLoaded", () => {
-  new WeatherApp()
-})
+  weatherApp = new WeatherApp();
+});
+
 function toggleSidebar() {
   const sidebar = document.getElementById("mobile-sidebar");
   const overlay = document.getElementById("sidebar-overlay");
